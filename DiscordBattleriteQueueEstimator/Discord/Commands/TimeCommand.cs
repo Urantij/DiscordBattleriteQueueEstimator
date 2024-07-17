@@ -134,6 +134,21 @@ public class TimeCommand : BaseCommand
                     currentIndex++;
                     continue;
                 }
+                
+                // Иногда во время загрузки приходит ивент типа
+                // Hero = , PartySize = 1, Details = , State = Not in a group
+                // Думаю, его следует просто игнорировать тут.
+                if (string.IsNullOrEmpty(prevStatus.Details))
+                {
+                    lookBehindIndex--;
+                    if (lookBehindIndex < 0)
+                    {
+                        currentIndex++;
+                        continue;
+                    }
+                
+                    prevStatus = statuses[lookBehindIndex];
+                }
 
                 // Иногда после нахождения игры приходит статус про меню. Нужно просто копнуть чуть дальше.
                 if (prevStatus.Details == "In Menus")
