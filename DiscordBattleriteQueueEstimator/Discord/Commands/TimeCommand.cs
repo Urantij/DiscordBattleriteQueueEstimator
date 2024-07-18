@@ -171,7 +171,9 @@ public class TimeCommand : BaseCommand
                 // Если мы ща смотрим матч, то впереди куча весёлых рп о ходе этого матча.
                 // Нужно идти вперёд до конца, учитывая точки и фейки.
                 // Нужно ещё учитывать, что после всех этих пробежек, внешний цикл также шагнёт currentIndex++
-                // То есть currentIndex после цикла должен быть равн индексу последнего статуса с ареной.
+                // То есть currentIndex после цикла должен быть равен индексу последнего статуса с ареной.
+                // Ещё как то странно, что лукап это текущий индекс +1, и часть проверок на этот индекс уже сделаны, типа той же точет.
+                // Ну да ладно.
                 int lookUpIndex = currentIndex + 1;
                 DateTimeOffset? postGameDate = null;
                 while (lookUpIndex < statuses.Length)
@@ -197,7 +199,7 @@ public class TimeCommand : BaseCommand
 
                     // Ещё можно проверять героя (учитывая, что во время загрузки матча первый статус приходит с нулл героем)
                     // И какой Bo в матче. Но впадлу как то.
-                    if (Work.Worker.ArenaRegex.IsMatch(status.Details))
+                    if (lookUpStatus.Details != null && Work.Worker.ArenaRegex.IsMatch(lookUpStatus.Details))
                         lookUpIndex++;
                     else
                         break;
