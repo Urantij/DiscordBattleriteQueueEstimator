@@ -45,7 +45,7 @@ public class TimeCommand : BaseCommand
             {
                 Date = s.Date,
                 FakeRp = s.FakeRp,
-                Details = s.RpInfo.Details
+                Details = s.RpInfo!.Details
             }).ToArrayAsync();
 
         DateTimeOffset?[] points = await context.Points
@@ -70,7 +70,7 @@ public class TimeCommand : BaseCommand
                 currentIndex++;
                 continue;
             }
-            
+
             // Если точка раньше статуса, то между двумя статусами могло быть что угодно, это мы не рассчитываем.
             DateTimeOffset? nextPoint = points.FirstOrDefault(p => p > status.Date);
 
@@ -78,9 +78,9 @@ public class TimeCommand : BaseCommand
             {
                 if (nextPoint != null)
                     break;
-                
+
                 TimeSpan diff2 = DateTimeOffset.UtcNow - status.Date;
-                
+
                 // Нужно бы придумать нормальную логику, но мне сложно
                 // Алсо, если чел ща в матче и напишет, получается, нужно траверсить все рп игры до её начала...
                 if (status.Details == "In Menus")
@@ -89,12 +89,12 @@ public class TimeCommand : BaseCommand
                     leagueQueueTime += diff2;
                 else if (status.Details == "In Queue: Casual")
                     casualQueueTime += diff2;
-                
+
                 break;
             }
 
             UserStatusDTO nextStatus = statuses[currentIndex + 1];
-            
+
             if (nextPoint < nextStatus.Date)
             {
                 currentIndex++;
@@ -134,7 +134,7 @@ public class TimeCommand : BaseCommand
                     currentIndex++;
                     continue;
                 }
-                
+
                 // Иногда во время загрузки приходит ивент типа
                 // Hero = , PartySize = 1, Details = , State = Not in a group
                 // Думаю, его следует просто игнорировать тут.
@@ -146,7 +146,7 @@ public class TimeCommand : BaseCommand
                         currentIndex++;
                         continue;
                     }
-                
+
                     prevStatus = statuses[lookBehindIndex];
                 }
 
@@ -170,29 +170,30 @@ public class TimeCommand : BaseCommand
 
                 // Если мы ща смотрим матч, то впереди куча весёлых рп о ходе этого матча.
                 // Нужно идти вперёд до конца, учитывая точки и фейки.
+                // Нужно ещё учитывать, что после всех этих пробежек, внешний цикл также шагнёт currentIndex++
+                // То есть currentIndex после цикла должен быть равн индексу последнего статуса с ареной.
                 int lookUpIndex = currentIndex + 1;
-                UserStatusDTO? postGameStatus = null;
+                DateTimeOffset? postGameDate = null;
                 while (lookUpIndex < statuses.Length)
                 {
                     UserStatusDTO lookUpStatus = statuses[lookUpIndex];
-                    DateTimeOffset? lookUpPoint = points.FirstOrDefault(p => p > status.Date);
 
-                    if (lookUpPoint < lookUpStatus.Date)
+                    if (nextPoint < lookUpStatus.Date)
                     {
                         // Всё, больше мы ничего не узнаем.
-                        currentIndex = lookUpIndex + 1;
                         break;
                     }
 
                     if (lookUpStatus.FakeRp)
                     {
                         // Мы не знаем, что там случилось, но мы знаем, что до этого момента была игра.
-                        postGameStatus = lookUpStatus;
-                        currentIndex = lookUpIndex + 1;
+                        postGameDate = lookUpStatus.Date;
+                        // ++, Таким образом следующий цикл пропустит этот статус, так как он всё равно фейк и пофиг.
+                        lookUpIndex++;
                         break;
                     }
-                    
-                    postGameStatus = lookUpStatus;
+
+                    postGameDate = lookUpStatus.Date;
 
                     // Ещё можно проверять героя (учитывая, что во время загрузки матча первый статус приходит с нулл героем)
                     // И какой Bo в матче. Но впадлу как то.
@@ -202,9 +203,17 @@ public class TimeCommand : BaseCommand
                         break;
                 }
 
-                if (postGameStatus != null)
+                // Если дошли до конца, значит это идёт текущий матч.
+                if (lookUpIndex == statuses.Length)
                 {
-                    diff = postGameStatus.Date - status.Date;
+                    postGameDate = DateTimeOffset.UtcNow;
+                }
+
+                currentIndex = lookUpIndex - 1;
+
+                if (postGameDate != null)
+                {
+                    diff = postGameDate.Value - status.Date;
                 }
 
                 // Возможно, стоит также добавить проверку на время. Вряд ли быстрый перескок статусы был дольше 10 секунд.
@@ -219,7 +228,8 @@ public class TimeCommand : BaseCommand
             currentIndex++;
         }
 
-        string times = FormTime(menuTime, leagueQueueTime, casualQueueTime, leagueArenaTime, casualArenaTime, unknownArenaTime);
+        string times = FormTime(menuTime, leagueQueueTime, casualQueueTime, leagueArenaTime, casualArenaTime,
+            unknownArenaTime);
 
         if (times.Length > 0)
         {
@@ -227,11 +237,12 @@ public class TimeCommand : BaseCommand
         }
         else
         {
-            await SendReplyAsync(args, "i dont know you, you dont belong here.");   
+            await SendReplyAsync(args, "i dont know you, you dont belong here.");
         }
     }
 
-    private static string FormTime(TimeSpan menuTime, TimeSpan leagueQueueTime, TimeSpan casualQueueTime, TimeSpan leagueArenaTime, TimeSpan casualArenaTime, TimeSpan unknownArenaTime)
+    private static string FormTime(TimeSpan menuTime, TimeSpan leagueQueueTime, TimeSpan casualQueueTime,
+        TimeSpan leagueArenaTime, TimeSpan casualArenaTime, TimeSpan unknownArenaTime)
     {
         StringBuilder b = new();
 
