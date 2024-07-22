@@ -45,6 +45,19 @@ public class Discorb : IHostedService
     {
         // срабатывает и когда уходит в офлаин.
 
+        // Иногда приходит такой прикол. При этом Activity, UserAfter, UserBefore и PresenceAfter могут быть не нулл.
+        // Предположу, что это прикол библиотеки, когда информация о рп юзера приходит раньше инфы о самом юзере.
+        if (args.User == null)
+        {
+            ulong? id = args.UserAfter?.Id ?? args.UserBefore?.Id;
+            if (id != null)
+            {
+                UserRped?.Invoke(new UserInfo(id.Value, false, null, DateTimeOffset.UtcNow));
+            }
+
+            return Task.CompletedTask;
+        }
+
         (RpInfo? rpInfo, bool fakeRp) = Do(args.User);
 
         UserRped?.Invoke(new UserInfo(args.User.Id, fakeRp, rpInfo, DateTimeOffset.UtcNow));
@@ -67,7 +80,7 @@ public class Discorb : IHostedService
     private (RpInfo? rpInfo, bool fakeRp) Do(DiscordUser user)
     {
         DiscordActivity? activity =
-            user.Presence?.Activities.FirstOrDefault(a =>
+            user.Presence?.Activities?.FirstOrDefault(a =>
                 a.RichPresence?.Application != null && IsBrRp(a.RichPresence));
 
         if (activity == null)
