@@ -7,15 +7,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DiscordBattleriteQueueEstimator.Discord.Commands;
 
-class UserStatusDTO
-{
-    public DateTimeOffset Date { get; init; }
-    public bool FakeRp { get; init; }
-    public string? Details { get; init; }
-}
-
 public class TimeCommand : BaseCommand
 {
+    class UserStatusDTO
+    {
+        public DateTimeOffset Date { get; init; }
+        public bool FakeRp { get; init; }
+        public string? Details { get; init; }
+    }
+
     private readonly Database _database;
 
     public TimeCommand(Database database, ILoggerFactory loggerFactory) : base(loggerFactory)
@@ -264,7 +264,7 @@ public class TimeCommand : BaseCommand
         return b.ToString();
     }
 
-    private static string MakeTime(TimeSpan time)
+    public static string MakeTime(TimeSpan time)
     {
         if (time.TotalSeconds < 60)
             return $"{time.TotalSeconds:F0} Seconds";

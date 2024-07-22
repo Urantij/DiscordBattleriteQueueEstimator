@@ -20,6 +20,12 @@ public class DiscorbCommander : IHostedService
         Description = "sadge statistic"
     };
 
+    private readonly CommandInfo _heroCommand = new()
+    {
+        Name = "hero",
+        Description = "sadge statistic"
+    };
+
     private readonly CommandInfo[] _commands;
 
     private readonly Discorb _discorb;
@@ -28,7 +34,8 @@ public class DiscorbCommander : IHostedService
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<DiscorbCommander> _logger;
 
-    public DiscorbCommander(Discorb discorb, Work.Worker worker, IServiceProvider provider, ILoggerFactory loggerFactory)
+    public DiscorbCommander(Discorb discorb, Work.Worker worker, IServiceProvider provider,
+        ILoggerFactory loggerFactory)
     {
         _discorb = discorb;
         _worker = worker;
@@ -36,7 +43,7 @@ public class DiscorbCommander : IHostedService
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<DiscorbCommander>();
 
-        _commands = [_infoCommand, _timeCommand];
+        _commands = [_infoCommand, _timeCommand, _heroCommand];
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -73,7 +80,7 @@ public class DiscorbCommander : IHostedService
 
             commandInfo.Id = applicationCommand.Id;
 
-            _logger.LogDebug("Команда найдена, айди {id}", commandInfo.Id);
+            _logger.LogDebug("Команда {name} найдена, айди {id}", commandInfo.Name, commandInfo.Id);
         }
     }
 
@@ -93,6 +100,8 @@ public class DiscorbCommander : IHostedService
             command = new InfoCommand(_worker, _loggerFactory);
         else if (args.Interaction.Data.Id == _timeCommand.Id)
             command = new TimeCommand(_provider.GetRequiredService<Database>(), _loggerFactory);
+        else if (args.Interaction.Data.Id == _heroCommand.Id)
+            command = new HeroCommand(_provider.GetRequiredService<Database>(), _loggerFactory);
 
         if (command != null)
             try
