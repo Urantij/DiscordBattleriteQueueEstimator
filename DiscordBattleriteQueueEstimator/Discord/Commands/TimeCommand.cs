@@ -168,6 +168,14 @@ public class TimeCommand : BaseCommand
                     }
                 }
 
+                // Прошлый статус был в прошлой жизни.
+                DateTimeOffset? prevPoint = points.LastOrDefault(p => p < status.Date);
+                if (prevPoint > prevStatus.Date)
+                {
+                    currentIndex++;
+                    continue;
+                }
+
                 // Если мы ща смотрим матч, то впереди куча весёлых рп о ходе этого матча.
                 // Нужно идти вперёд до конца, учитывая точки и фейки.
                 // Нужно ещё учитывать, что после всех этих пробежек, внешний цикл также шагнёт currentIndex++

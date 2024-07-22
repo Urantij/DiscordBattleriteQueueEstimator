@@ -96,44 +96,7 @@ public class HeroCommand : BaseCommand
                 continue;
             }
 
-            UserStatusDTO prevStatus = statuses[lookBehindIndex];
-
-            if (prevStatus.FakeRp)
-            {
-                currentIndex++;
-                continue;
-            }
-
-            if (string.IsNullOrEmpty(prevStatus.Details))
-            {
-                lookBehindIndex--;
-                if (lookBehindIndex < 0)
-                {
-                    currentIndex++;
-                    continue;
-                }
-
-                prevStatus = statuses[lookBehindIndex];
-            }
-
-            if (prevStatus.Details == "In Menus")
-            {
-                lookBehindIndex--;
-                if (lookBehindIndex < 0)
-                {
-                    currentIndex++;
-                    continue;
-                }
-
-                prevStatus = statuses[lookBehindIndex];
-                if (prevStatus.FakeRp)
-                {
-                    currentIndex++;
-                    continue;
-                }
-            }
-
-            string? hero = null;
+            string? hero = status.Hero;
 
             int lookUpIndex = currentIndex + 1;
             DateTimeOffset? postGameDate = null;
