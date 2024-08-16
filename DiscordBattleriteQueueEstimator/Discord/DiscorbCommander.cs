@@ -115,4 +115,15 @@ public class DiscorbCommander : IHostedService
 
         return Task.CompletedTask;
     }
+
+    public static string GetDefaultHelpText()
+    {
+        return
+            """
+            Can't get information about you.
+            This bot allows you to find out your time on certain heroes, as well as time spent in game modes.
+            The bot uses Rich Presence in discord to get information about you.
+            To access these stats, make sure you have enabled your activity display in Discord.
+            """;
+    }
 }

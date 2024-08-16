@@ -34,7 +34,7 @@ public class TimeCommand : BaseCommand
 
         if (userId == null)
         {
-            await SendReplyAsync(args, "noob");
+            await SendReplyAsync(args, DiscorbCommander.GetDefaultHelpText());
             return;
         }
 
@@ -247,7 +247,7 @@ public class TimeCommand : BaseCommand
         }
         else
         {
-            await SendReplyAsync(args, "i dont know you, you dont belong here.");
+            await SendReplyAsync(args, DiscorbCommander.GetDefaultHelpText());
         }
     }
 

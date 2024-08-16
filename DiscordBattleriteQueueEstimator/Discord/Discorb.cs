@@ -30,7 +30,7 @@ public class Discorb : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        return _client.ConnectAsync();
+        return _client.ConnectAsync(activity: new DiscordActivity("Watching your game"));
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
