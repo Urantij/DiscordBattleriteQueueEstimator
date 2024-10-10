@@ -14,6 +14,7 @@ public class Program
         builder.Logging.ClearProviders();
         builder.Logging.AddSimpleConsole(c => { c.TimestampFormat = "[HH:mm:ss] "; });
 
+        // TODO В релизной сборке ему всё равно на этот сет минимум левел. Надо бы подумать над этим.
 #if DEBUG
         builder.Logging.SetMinimumLevel(LogLevel.Debug);
 #else
