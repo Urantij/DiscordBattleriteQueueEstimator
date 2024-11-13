@@ -1,6 +1,5 @@
 using DiscordBattleriteQueueEstimator.Data;
 using DiscordBattleriteQueueEstimator.Discord;
-using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace DiscordBattleriteQueueEstimator;

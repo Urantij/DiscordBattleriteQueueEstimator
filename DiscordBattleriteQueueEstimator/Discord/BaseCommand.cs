@@ -1,6 +1,6 @@
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
+using NetCord;
+using NetCord.Gateway;
+using NetCord.Rest;
 
 namespace DiscordBattleriteQueueEstimator.Discord;
 
@@ -13,13 +13,12 @@ public abstract class BaseCommand
         _logger = loggerFactory.CreateLogger(this.GetType());
     }
 
-    public abstract Task DoAsync(DiscordClient sender, InteractionCreateEventArgs args);
+    public abstract Task DoAsync(GatewayClient sender, SlashCommandInteraction args);
 
-    protected Task SendReplyAsync(InteractionCreateEventArgs args, string text)
+    protected Task SendReplyAsync(SlashCommandInteraction args, string text)
     {
-        return args.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-            new DiscordInteractionResponseBuilder()
-                .WithContent(text)
-                .AsEphemeral());
+        return args.SendResponseAsync(InteractionCallback.Message(new InteractionMessageProperties()
+            .WithContent(text)
+            .WithFlags(MessageFlags.Ephemeral)));
     }
 }

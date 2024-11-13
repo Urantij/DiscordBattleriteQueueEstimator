@@ -1,8 +1,8 @@
 using DiscordBattleriteQueueEstimator.Data;
 using DiscordBattleriteQueueEstimator.Discord.Commands;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
+using NetCord;
+using NetCord.Gateway;
+using NetCord.Rest;
 
 namespace DiscordBattleriteQueueEstimator.Discord;
 
@@ -48,34 +48,44 @@ public class DiscorbCommander : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        DiscordClient client = _discorb.GetClient();
+        GatewayClient client = _discorb.GetClient();
 
-        client.InteractionCreated += OnComponentInteractionCreated;
+        if (_discorb.Application == null)
+        {
+            _logger.LogError("Аппликейшн недоступен.");
+            return;
+        }
 
-        IReadOnlyList<DiscordApplicationCommand>? discordApplicationCommands =
-            await client.GetGlobalApplicationCommandsAsync();
+        client.InteractionCreate += ClientOnInteractionCreate;
+
+        IReadOnlyList<ApplicationCommand> discordApplicationCommands =
+            await client.Rest.GetGlobalApplicationCommandsAsync(_discorb.Application.Id,
+                cancellationToken: cancellationToken);
 
         foreach (CommandInfo commandInfo in _commands)
         {
-            DiscordApplicationCommand? applicationCommand =
+            ApplicationCommand? applicationCommand =
                 discordApplicationCommands.FirstOrDefault(c => c.Name == commandInfo.Name);
 
+            // Комментарий ниже относится к библиотеке dsharpplus
+            // Но это такая тупая хуйня, что я решил его оставить
             // ОНИ РЕАЛЬНО СДЕЛАЛИ ТАК ЧТО == НУЛЛ КИДАЕТ НУЛЛ РЕФЕРЕНС. БЕЛИССИМО
             if (applicationCommand is null)
             {
                 _logger.LogInformation("Создаём команду.");
 
-                applicationCommand = await client.CreateGlobalApplicationCommandAsync(
-                    new DiscordApplicationCommand(
-                        commandInfo.Name, commandInfo.Description, allowDMUsage: true));
+                applicationCommand = await client.Rest.CreateGlobalApplicationCommandAsync(_discorb.Application.Id,
+                    new SlashCommandProperties(commandInfo.Name, commandInfo.Description).WithContexts([
+                        InteractionContextType.BotDMChannel
+                    ]));
             }
 
-            if (applicationCommand.AllowDMUsage != true)
+            if (applicationCommand.Contexts?.Any(c => c == InteractionContextType.BotDMChannel) != true)
             {
-                _logger.LogDebug("Команда без дма, меняем, айди {id}", commandInfo.Id);
-                applicationCommand =
-                    await client.EditGlobalApplicationCommandAsync(applicationCommand.Id,
-                        (a) => { a.AllowDMUsage = true; });
+                _logger.LogDebug("Команда без дма, меняем, айди {id}", applicationCommand.Id);
+                applicationCommand = await client.Rest.ModifyGlobalApplicationCommandAsync(
+                    applicationCommand.ApplicationId, applicationCommand.Id,
+                    action => action.AddContexts([InteractionContextType.BotDMChannel]), cancellationToken: cancellationToken);
             }
 
             commandInfo.Id = applicationCommand.Id;
@@ -86,34 +96,38 @@ public class DiscorbCommander : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        _discorb.GetClient().InteractionCreated -= OnComponentInteractionCreated;
+        _discorb.GetClient().InteractionCreate -= ClientOnInteractionCreate;
 
         return Task.CompletedTask;
     }
 
-    private Task OnComponentInteractionCreated(DiscordClient sender, InteractionCreateEventArgs args)
+    private async ValueTask ClientOnInteractionCreate(Interaction arg)
     {
-        _logger.LogDebug("Получена интеракция {id}", args.Interaction.Data.Id);
+        if (arg is not SlashCommandInteraction slashCommandInteraction)
+        {
+            _logger.LogWarning("Странная интеракция {name}", arg.GetType().Name);
+            return;
+        }
+
+        _logger.LogDebug("Получена интеракция {id}", slashCommandInteraction.Data.Id);
 
         BaseCommand? command = null;
-        if (args.Interaction.Data.Id == _infoCommand.Id)
+        if (slashCommandInteraction.Data.Id == _infoCommand.Id)
             command = new InfoCommand(_worker, _loggerFactory);
-        else if (args.Interaction.Data.Id == _timeCommand.Id)
+        else if (slashCommandInteraction.Data.Id == _timeCommand.Id)
             command = new TimeCommand(_provider.GetRequiredService<Database>(), _loggerFactory);
-        else if (args.Interaction.Data.Id == _heroCommand.Id)
+        else if (slashCommandInteraction.Data.Id == _heroCommand.Id)
             command = new HeroCommand(_provider.GetRequiredService<Database>(), _loggerFactory);
 
         if (command != null)
             try
             {
-                return command.DoAsync(sender, args);
+                await command.DoAsync(_discorb.GetClient(), slashCommandInteraction);
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Команда {name} провалилась", command.GetType().Name);
             }
-
-        return Task.CompletedTask;
     }
 
     public static string GetDefaultHelpText()

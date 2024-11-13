@@ -1,6 +1,5 @@
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
+using NetCord;
+using NetCord.Gateway;
 
 namespace DiscordBattleriteQueueEstimator.Discord.Commands;
 
@@ -13,7 +12,7 @@ public class InfoCommand : BaseCommand
         _worker = worker;
     }
 
-    public override Task DoAsync(DiscordClient sender, InteractionCreateEventArgs args)
+    public override Task DoAsync(GatewayClient sender, SlashCommandInteraction args)
     {
         int total = _worker.CountUsers();
         int inLeagueQueue = _worker.CountUsers(u => u.LastInfo.Details == "In Queue: League");

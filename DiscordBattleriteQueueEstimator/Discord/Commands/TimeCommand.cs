@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using DiscordBattleriteQueueEstimator.Data;
-using DSharpPlus;
-using DSharpPlus.EventArgs;
 using Microsoft.EntityFrameworkCore;
+using NetCord;
+using NetCord.Gateway;
 
 namespace DiscordBattleriteQueueEstimator.Discord.Commands;
 
@@ -23,12 +23,12 @@ public class TimeCommand : BaseCommand
         _database = database;
     }
 
-    public override async Task DoAsync(DiscordClient sender, InteractionCreateEventArgs args)
+    public override async Task DoAsync(GatewayClient sender, SlashCommandInteraction args)
     {
         await using MyContext context = await _database.CreateContextAsync();
 
         int? userId = await context.Users
-            .Where(u => u.DiscordId == args.Interaction.User.Id)
+            .Where(u => u.DiscordId == args.User.Id)
             .Select(u => (int?)u.Id)
             .FirstOrDefaultAsync();
 

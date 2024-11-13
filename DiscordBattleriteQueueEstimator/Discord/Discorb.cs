@@ -1,8 +1,11 @@
+using System.Net;
 using DiscordBattleriteQueueEstimator.Data.Models;
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
+using DiscordBattleriteQueueEstimator.Discord.Sock;
 using Microsoft.Extensions.Options;
+using NetCord;
+using NetCord.Gateway;
+using NetCord.Gateway.WebSockets;
+using NetCord.Rest;
 
 namespace DiscordBattleriteQueueEstimator.Discord;
 
@@ -10,105 +13,146 @@ public class Discorb : IHostedService
 {
     private const ulong BattleriteAppId = 352378924317147156;
 
-    private readonly DiscordClient _client;
+    private readonly ILogger<Discorb> _logger;
+    private readonly GatewayClient _client;
+    private readonly ILogger<GatewayClient> _clientLogger;
+
+    public Application? Application { get; private set; }
 
     public event Action<UserInfo>? UserRped;
 
     public Discorb(IOptions<DiscorbConfig> options, ILoggerFactory loggerFactory)
     {
-        _client = new DiscordClient(new DiscordConfiguration()
-        {
-            Token = options.Value.Token,
-            TokenType = TokenType.Bot,
-            Intents = DiscordIntents.GuildMembers | DiscordIntents.GuildPresences | DiscordIntents.AllUnprivileged,
-            LoggerFactory = loggerFactory
-        });
+        _logger = loggerFactory.CreateLogger<Discorb>();
 
-        _client.PresenceUpdated += DiscordClientOnPresenceUpdated;
-        _client.GuildAvailable += DiscordClientOnGuildAvailable;
+        WebProxy? proxy = null;
+        if (options.Value.Proxy != null)
+        {
+            _logger.LogInformation("Юзаем прокси");
+            proxy = new WebProxy(options.Value.Proxy);
+        }
+
+        RestClientConfiguration? restClientConfiguration = null;
+        if (proxy != null)
+        {
+            restClientConfiguration = new RestClientConfiguration()
+            {
+                RequestHandler = new RestRequestHandler(new HttpClientHandler()
+                {
+                    Proxy = proxy
+                })
+            };
+        }
+
+        IWebSocketConnectionProvider? webSocketConnectionProvider = null;
+        if (proxy != null)
+        {
+            webSocketConnectionProvider = new MyWebSocketConnectionProvider(proxy);
+        }
+
+        _client = new GatewayClient(new BotToken(options.Value.Token), new GatewayClientConfiguration()
+        {
+            RestClientConfiguration = restClientConfiguration,
+            WebSocketConnectionProvider = webSocketConnectionProvider,
+            Intents = GatewayIntents.GuildUsers | GatewayIntents.GuildPresences | GatewayIntents.AllNonPrivileged,
+        });
+        _client.Log += ClientOnLog;
+        _clientLogger = loggerFactory.CreateLogger<GatewayClient>();
+
+        _client.PresenceUpdate += ClientOnPresenceUpdate;
+        _client.GuildCreate += ClientOnGuildCreate;
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    private ValueTask ClientOnLog(LogMessage arg)
     {
-        return _client.ConnectAsync(activity: new DiscordActivity("Watching your game"));
+        LogLevel level = arg.Severity switch
+        {
+            LogSeverity.Error => LogLevel.Error,
+            LogSeverity.Info => LogLevel.Debug,
+            _ => LogLevel.Warning
+        };
+
+        _clientLogger.Log(level, "{message} ({description})", arg.Message, arg.Description);
+
+        return ValueTask.CompletedTask;
+    }
+
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        await _client.StartAsync(new PresenceProperties(UserStatusType.Online).WithActivities(new[]
+        {
+            new UserActivityProperties("Watching your game", UserActivityType.Playing)
+        }), cancellationToken);
+
+        Application = await _client.Rest.GetCurrentApplicationAsync(cancellationToken: cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        return _client.DisconnectAsync();
+        return _client.CloseAsync(cancellationToken: cancellationToken);
     }
 
-    public DiscordClient GetClient()
+    public GatewayClient GetClient()
         => _client;
 
-    private Task DiscordClientOnPresenceUpdated(DiscordClient sender, PresenceUpdateEventArgs args)
+    private ValueTask ClientOnPresenceUpdate(Presence arg)
     {
         // срабатывает и когда уходит в офлаин.
-
-        // Иногда приходит такой прикол. При этом Activity, UserAfter, UserBefore и PresenceAfter могут быть не нулл.
-        // Предположу, что это прикол библиотеки, когда информация о рп юзера приходит раньше инфы о самом юзере.
-        if (args.User == null)
-        {
-            ulong? id = args.UserAfter?.Id ?? args.UserBefore?.Id;
-            if (id != null)
-            {
-                UserRped?.Invoke(new UserInfo(id.Value, false, null, DateTimeOffset.UtcNow));
-            }
-
-            return Task.CompletedTask;
-        }
-
-        (RpInfo? rpInfo, bool fakeRp) = Do(args.User);
-
-        UserRped?.Invoke(new UserInfo(args.User.Id, fakeRp, rpInfo, DateTimeOffset.UtcNow));
-
-        return Task.CompletedTask;
+        
+        (RpInfo? rpInfo, bool fakeRp) = Do(arg);
+        
+        UserRped?.Invoke(new UserInfo(arg.User.Id, fakeRp, rpInfo, DateTimeOffset.UtcNow));
+        
+        return ValueTask.CompletedTask;
     }
 
-    private Task DiscordClientOnGuildAvailable(DiscordClient sender, GuildCreateEventArgs args)
+    private ValueTask ClientOnGuildCreate(GuildCreateEventArgs arg)
     {
-        foreach (DiscordMember member in args.Guild.Members.Values)
+        if (arg.Guild?.Presences is null)
+            return ValueTask.CompletedTask;
+        
+        foreach (KeyValuePair<ulong, Presence> member in arg.Guild.Presences)
         {
-            (RpInfo? rpInfo, bool fakeRp) = Do(member);
-
-            UserRped?.Invoke(new UserInfo(member.Id, fakeRp, rpInfo, DateTimeOffset.UtcNow));
+            (RpInfo? rpInfo, bool fakeRp) = Do(member.Value);
+    
+            UserRped?.Invoke(new UserInfo(member.Value.User.Id, fakeRp, rpInfo, DateTimeOffset.UtcNow));
         }
-
-        return Task.CompletedTask;
+    
+        return ValueTask.CompletedTask;
     }
-
-    private (RpInfo? rpInfo, bool fakeRp) Do(DiscordUser user)
+    
+    private (RpInfo? rpInfo, bool fakeRp) Do(Presence presence)
     {
-        DiscordActivity? activity =
-            user.Presence?.Activities?.FirstOrDefault(a =>
-                a.RichPresence?.Application != null && IsBrRp(a.RichPresence));
-
+        UserActivity? activity = presence.Activities.FirstOrDefault(IsBrRp);
+        
         if (activity == null)
             return (null, false);
-
+    
         bool fakeRp;
         RpInfo? rpInfo;
-
+    
         // Это фейковый рп, как если бы его не было.
         // Приходит, если в данный момент у игрока клиент свёрнут.
         // Возможно, стоит добавить проверку на наличие State. Он вроде всегда есть.
-        if (activity.Name == "battlerite" || activity.RichPresence.StartTimestamp != null)
+        if (activity.Name == "battlerite" || activity.Timestamps?.StartTime != null)
         {
             fakeRp = true;
             rpInfo = null;
         }
         else
         {
+            // string.Empty нужен, чтобы модель в базе могла быть определена как отсутствующая
+            // если все проперти нулл, то тада непонятно короче, был рп вообще или нет.
             fakeRp = false;
-            rpInfo = new RpInfo(activity.RichPresence.SmallImageText, activity.RichPresence.Details,
-                activity.RichPresence.State, (int?)activity.RichPresence.CurrentPartySize);
+            rpInfo = new RpInfo(activity.Assets?.SmallText, activity.Details,
+                activity.State ?? string.Empty, activity.Party?.CurrentSize);
         }
-
+    
         return (rpInfo, fakeRp);
     }
-
-    private bool IsBrRp(DiscordRichPresence argRichPresence)
+    
+    private bool IsBrRp(UserActivity activity)
     {
-        return argRichPresence.Application.Id == BattleriteAppId;
+        return activity.ApplicationId == BattleriteAppId;
     }
 }
