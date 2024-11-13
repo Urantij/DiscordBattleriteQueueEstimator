@@ -1,6 +1,9 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using DiscordBattleriteQueueEstimator.Data;
 using DiscordBattleriteQueueEstimator.Discord;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace DiscordBattleriteQueueEstimator;
 
@@ -21,10 +24,25 @@ public class Program
             builder.Logging.SetMinimumLevel(LogLevel.Debug);
 #endif
 
-        builder.Services.AddOptions<DiscorbConfig>()
-            .Bind(builder.Configuration.GetSection("Discord"))
-            // .ValidateDataAnnotations()
-            .ValidateOnStart();
+        // Очень жаль, но нормального способа читать конфиги в aot тупо нет.
+        {
+            string settingsContent = File.ReadAllText("./appsettings.json");
+
+            JsonNode? discordNode = JsonNode.Parse(settingsContent)?["Discord"];
+            if (discordNode == null)
+                throw new Exception("Дискорд конфига не вижу");
+
+            DiscorbConfig? config = discordNode.Deserialize<DiscorbConfig>(new JsonSerializerOptions()
+            {
+                TypeInfoResolver = DiscorbConfigContext.Default
+            });
+            if (config == null)
+                throw new Exception("Дискорд конфига не читается");
+
+            OptionsWrapper<DiscorbConfig> optionsWrapper = new(config);
+
+            builder.Services.AddSingleton<IOptions<DiscorbConfig>>(_ => optionsWrapper);
+        }
 
         builder.Services.AddDbContextFactory<MyContext>(optionsBuilder =>
         {
@@ -49,7 +67,7 @@ public class Program
             ILogger logger = provider.ServiceProvider.GetRequiredService<ILogger<Program>>();
             logger.LogInformation("info");
             logger.LogDebug("debug");
-            
+
             using var context = provider.ServiceProvider.GetRequiredService<MyContext>();
             context.Database.Migrate();
         }
