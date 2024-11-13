@@ -1,0 +1,48 @@
+к сож прекомпиляцию куери не работает.
+
+dotnet ef dbcontext optimize --precompile-queries
+
+тупо выдаёт ошибку, что он не может получить доступ к папке /Data
+я так понимаю, он лезет в папку дата в руте файл системы, угум
+
+а паблиш сыпит миллиардом ошибок, которые нечитаемые+необъяснены.
+например, он не мог юзать nested class. ну ок. а что такое
+QueryPrecompilationError { SyntaxNode = context.Users.FirstOrDefaultAsync(u => u.DiscordId == discordId), Exception = System.Diagnostics.UnreachableException: IdentifierName of type ParameterSymbol: discordId
+походу он не может юзать переменную аргумент, нужно локальную создавать. лол. интересно.
+
+да, убрал везде юзание аргумента. остались теперь ошибки, что он в сгенерированном коде не имет референса на DbUser по какой то причине, ага
+он включил этот неймспейс
+using DiscordBattleriteQueueEstimator.Data;
+но не захотело включать
+namespace DiscordBattleriteQueueEstimator.Data.Models;
+
+абалдеть, оно скомпилировалось. за 3 минуты. )
+
+
+System.NotSupportedException: 'Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer.CreateDefault[System.UInt64](System.Boolean)' is missing native code. MethodInfo.MakeGenericMethod() is not compatible with AOT compilation. Inspect and fix AOT related warnings that were generated when the app was published. For more information see https://aka.ms/nativeaot-compatibility
+     at System.Reflection.Runtime.MethodInfos.RuntimeNamedMethodInfo`1.GetUncachedMethodInvoker(RuntimeTypeInfo[], MemberInfo) + 0x2a
+     at System.Reflection.Runtime.MethodInfos.RuntimeNamedMethodInfo`1.MakeGenericMethod(Type[]) + 0x191
+     at Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer.CreateDefault(Type type, Boolean favorStructuralComparisons) + 0x5f
+     at Microsoft.EntityFrameworkCore.Internal.NonCapturingLazyInitializer.EnsureInitialized[TParam,TValue](TValue&, TParam, Func`2) + 0x1d
+     at Microsoft.EntityFrameworkCore.Metadata.RuntimeProperty.<>c.<GetValueComparer>b__47_0(RuntimeProperty property) + 0x31
+     at Microsoft.EntityFrameworkCore.Internal.NonCapturingLazyInitializer.EnsureInitialized[TParam,TValue](TValue&, TParam, Func`2) + 0x1d
+     at DiscordBattleriteQueueEstimator.DbUserEntityType.<>c__DisplayClass1_0.<CreateAnnotations>b__0(InternalEntityEntry source) + 0x7b
+     at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.InternalEntityEntry.EnsureOriginalValues() + 0x27
+     at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.InternalEntityEntrySubscriber.SnapshotAndSubscribe(InternalEntityEntry) + 0x31
+     at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.StartTracking(InternalEntityEntry) + 0x94
+     at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.InternalEntityEntry.SetEntityState(EntityState oldState, EntityState newState, Boolean acceptChanges, Boolean modifyProperties) + 0x32b
+     at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.InternalEntityEntry.SetEntityState(EntityState entityState, Boolean acceptChanges, Boolean modifyProperties, Nullable`1 forceStateWhenUnknownKey, Nullable`1 fallbackState) + 0xdf
+     at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.EntityGraphAttacher.PaintAction(EntityEntryGraphNode`1 node) + 0x12c
+     at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.EntityEntryGraphIterator.TraverseGraph[TState](EntityEntryGraphNode`1 node, Func`2 handleNode) + 0x2a
+     at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.EntityGraphAttacher.AttachGraph(InternalEntityEntry, EntityState, EntityState, Boolean) + 0x119
+     at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.SetEntityState(InternalEntityEntry, EntityState) + 0xfa
+     at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.Add(TEntity) + 0x28
+     at DiscordBattleriteQueueEstimator.Data.Database.<CreateUserAsync>d__3.MoveNext() + 0x1d8
+  --- End of stack trace from previous location ---
+     at DiscordBattleriteQueueEstimator.Data.Database.<CreateUserAsync>d__3.MoveNext() + 0x321
+  --- End of stack trace from previous location ---
+     at DiscordBattleriteQueueEstimator.Work.Worker.<LoopAsync>d__14.MoveNext() + 0x1cf
+  --- End of stack trace from previous location ---
+     at DiscordBattleriteQueueEstimator.Work.Worker.<<DiscorbOnUserRped>b__13_0>d.MoveNext() + 0x5b
+     
+всёё, я сдаюсь

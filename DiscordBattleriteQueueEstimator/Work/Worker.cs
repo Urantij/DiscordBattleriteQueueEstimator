@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using DiscordBattleriteQueueEstimator.Data;
-using DiscordBattleriteQueueEstimator.Data.Models;
 using DiscordBattleriteQueueEstimator.Discord;
 
 namespace DiscordBattleriteQueueEstimator.Work;

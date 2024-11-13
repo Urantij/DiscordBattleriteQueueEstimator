@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using DiscordBattleriteQueueEstimator.Data;
@@ -32,10 +33,14 @@ public class Program
             if (discordNode == null)
                 throw new Exception("Дискорд конфига не вижу");
 
+#pragma warning disable IL3050
+#pragma warning disable IL2026
             DiscorbConfig? config = discordNode.Deserialize<DiscorbConfig>(new JsonSerializerOptions()
             {
                 TypeInfoResolver = DiscorbConfigContext.Default
             });
+#pragma warning restore IL2026
+#pragma warning restore IL3050
             if (config == null)
                 throw new Exception("Дискорд конфига не читается");
 
@@ -69,7 +74,27 @@ public class Program
             logger.LogDebug("debug");
 
             using var context = provider.ServiceProvider.GetRequiredService<MyContext>();
-            context.Database.Migrate();
+            if (File.Exists("efbundle"))
+            {
+                using Process process = new();
+                process.StartInfo.FileName = "./efbundle";
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                process.StartInfo.CreateNoWindow = true;
+                
+                process.Start();
+
+                process.WaitForExit();
+
+                int code = process.ExitCode;
+
+                if (code != 0)
+                    throw new Exception($"Код выхода миграции {code}");
+            }
+            else
+            {
+                logger.LogWarning("Миграции не были применены.");
+            }
         }
         
         host.Run();

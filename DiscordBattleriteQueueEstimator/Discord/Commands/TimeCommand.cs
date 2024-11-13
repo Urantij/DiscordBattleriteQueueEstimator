@@ -7,15 +7,15 @@ using NetCord.Gateway;
 
 namespace DiscordBattleriteQueueEstimator.Discord.Commands;
 
+class UserStatusDTO2
+{
+    public DateTimeOffset Date { get; init; }
+    public bool FakeRp { get; init; }
+    public string? Details { get; init; }
+}
+
 public class TimeCommand : BaseCommand
 {
-    class UserStatusDTO
-    {
-        public DateTimeOffset Date { get; init; }
-        public bool FakeRp { get; init; }
-        public string? Details { get; init; }
-    }
-
     private readonly Database _database;
 
     public TimeCommand(Database database, ILoggerFactory loggerFactory) : base(loggerFactory)
@@ -27,8 +27,9 @@ public class TimeCommand : BaseCommand
     {
         await using MyContext context = await _database.CreateContextAsync();
 
+        ulong targetId = args.User.Id;
         int? userId = await context.Users
-            .Where(u => u.DiscordId == args.User.Id)
+            .Where(u => u.DiscordId == targetId)
             .Select(u => (int?)u.Id)
             .FirstOrDefaultAsync();
 
@@ -38,10 +39,10 @@ public class TimeCommand : BaseCommand
             return;
         }
 
-        UserStatusDTO[] statuses = await context.Statuses
+        UserStatusDTO2[] statuses = await context.Statuses
             .OrderBy(s => s.Date)
             .Where(s => s.UserId == userId)
-            .Select(s => new UserStatusDTO()
+            .Select(s => new UserStatusDTO2()
             {
                 Date = s.Date,
                 FakeRp = s.FakeRp,
@@ -63,7 +64,7 @@ public class TimeCommand : BaseCommand
         int currentIndex = 0;
         while (currentIndex < statuses.Length)
         {
-            UserStatusDTO status = statuses[currentIndex];
+            UserStatusDTO2 status = statuses[currentIndex];
 
             if (status.Details == null || status.FakeRp)
             {
@@ -93,7 +94,7 @@ public class TimeCommand : BaseCommand
                 break;
             }
 
-            UserStatusDTO nextStatus = statuses[currentIndex + 1];
+            UserStatusDTO2 nextStatus = statuses[currentIndex + 1];
 
             if (nextPoint < nextStatus.Date)
             {
@@ -126,7 +127,7 @@ public class TimeCommand : BaseCommand
                     continue;
                 }
 
-                UserStatusDTO prevStatus = statuses[lookBehindIndex];
+                UserStatusDTO2 prevStatus = statuses[lookBehindIndex];
 
                 // Мы ничего не знаем.
                 if (prevStatus.FakeRp)
@@ -186,7 +187,7 @@ public class TimeCommand : BaseCommand
                 DateTimeOffset? postGameDate = null;
                 while (lookUpIndex < statuses.Length)
                 {
-                    UserStatusDTO lookUpStatus = statuses[lookUpIndex];
+                    UserStatusDTO2 lookUpStatus = statuses[lookUpIndex];
 
                     if (nextPoint < lookUpStatus.Date)
                     {

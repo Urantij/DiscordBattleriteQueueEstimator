@@ -6,16 +6,16 @@ using NetCord.Gateway;
 
 namespace DiscordBattleriteQueueEstimator.Discord.Commands;
 
+class UserStatusDTO
+{
+    public DateTimeOffset Date { get; init; }
+    public bool FakeRp { get; init; }
+    public string? Details { get; init; }
+    public string? Hero { get; init; }
+}
+
 public class HeroCommand : BaseCommand
 {
-    class UserStatusDTO
-    {
-        public DateTimeOffset Date { get; init; }
-        public bool FakeRp { get; init; }
-        public string? Details { get; init; }
-        public string? Hero { get; init; }
-    }
-
     private readonly Database _database;
 
     public HeroCommand(Database database, ILoggerFactory loggerFactory) : base(loggerFactory)
@@ -27,8 +27,9 @@ public class HeroCommand : BaseCommand
     {
         await using MyContext context = await _database.CreateContextAsync();
 
+        ulong targetId = args.User.Id;
         int? userId = await context.Users
-            .Where(u => u.DiscordId == args.User.Id)
+            .Where(u => u.DiscordId == targetId)
             .Select(u => (int?)u.Id)
             .FirstOrDefaultAsync();
 

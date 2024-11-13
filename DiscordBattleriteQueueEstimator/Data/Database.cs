@@ -1,4 +1,3 @@
-using DiscordBattleriteQueueEstimator.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace DiscordBattleriteQueueEstimator.Data;
@@ -28,9 +27,11 @@ public class Database
 
     public async Task<DbUser?> LoadUserAsync(ulong discordId)
     {
+        ulong id = discordId;
+
         await using MyContext context = await _factory.CreateDbContextAsync();
 
-        return await context.Users.FirstOrDefaultAsync(u => u.DiscordId == discordId);
+        return await context.Users.FirstOrDefaultAsync(u => u.DiscordId == id);
     }
 
     public Task InsertStatusAsync(int userId, bool fakeRp, RpInfo? rpInfo, DateTimeOffset date)
