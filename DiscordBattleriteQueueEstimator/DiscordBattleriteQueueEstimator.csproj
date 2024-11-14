@@ -9,8 +9,11 @@
     <PropertyGroup>
         <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
         <PublishAot>true</PublishAot>
+        <Features>InterceptorsPreview</Features>
         <SelfContained>true</SelfContained>
-        <InterceptorsNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.EntityFrameworkCore.GeneratedInterceptors</InterceptorsNamespaces>
+<!--        <InterceptorsNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.EntityFrameworkCore.GeneratedInterceptors</InterceptorsNamespaces>-->
+<!--        <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.EntityFrameworkCore.GeneratedInterceptors;</InterceptorsPreviewNamespaces>-->
+        <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.EntityFrameworkCore.GeneratedInterceptors</InterceptorsPreviewNamespaces>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,10 +22,10 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tasks" Version="9.0.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
+<!--        <PackageReference Include="Microsoft.EntityFrameworkCore.Tasks" Version="9.0.0">-->
+<!--            <PrivateAssets>all</PrivateAssets>-->
+<!--            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
+<!--        </PackageReference>-->
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0"/>
         <PackageReference Include="NetCord" Version="1.0.0-alpha.326"/>
     </ItemGroup>

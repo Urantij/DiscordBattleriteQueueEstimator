@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using DiscordBattleriteQueueEstimator.Data;
 using DiscordBattleriteQueueEstimator.Discord;
+// using DiscordBattleriteQueueEstimator.Generated;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -52,6 +53,7 @@ public class Program
         builder.Services.AddDbContextFactory<MyContext>(optionsBuilder =>
         {
             optionsBuilder.UseSqlite($"Data Source=db.sqlite;");
+            // optionsBuilder.UseModel(MyContextModel.Instance);
         });
 
         builder.Services.AddSingleton<Database>();
@@ -74,27 +76,25 @@ public class Program
             logger.LogDebug("debug");
 
             using var context = provider.ServiceProvider.GetRequiredService<MyContext>();
-            if (File.Exists("efbundle"))
+            if (!File.Exists("efbundle"))
             {
-                using Process process = new();
-                process.StartInfo.FileName = "./efbundle";
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                process.StartInfo.CreateNoWindow = true;
-                
-                process.Start();
-
-                process.WaitForExit();
-
-                int code = process.ExitCode;
-
-                if (code != 0)
-                    throw new Exception($"Код выхода миграции {code}");
+                throw new Exception("efbundle не найден");
             }
-            else
-            {
-                logger.LogWarning("Миграции не были применены.");
-            }
+
+            using Process process = new();
+            process.StartInfo.FileName = "./efbundle";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            process.StartInfo.CreateNoWindow = true;
+
+            process.Start();
+
+            process.WaitForExit();
+
+            int code = process.ExitCode;
+
+            if (code != 0)
+                throw new Exception($"Код выхода миграции {code}");
         }
         
         host.Run();

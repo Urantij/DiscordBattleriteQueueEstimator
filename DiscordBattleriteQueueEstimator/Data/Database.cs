@@ -60,6 +60,7 @@ public class Database
         await using MyContext context = await _factory.CreateDbContextAsync();
 
         return await context.Statuses
+            .AsNoTrackingWithIdentityResolution()
             .OrderByDescending(s => s.Id)
             .Select(s => s.Id)
             .FirstOrDefaultAsync();
@@ -83,6 +84,7 @@ public class Database
         await using MyContext context = await _factory.CreateDbContextAsync();
 
         return await context.Points
+            .AsNoTrackingWithIdentityResolution()
             .OrderByDescending(s => s.Id)
             .Select(s => s.StatusId)
             .FirstOrDefaultAsync();
