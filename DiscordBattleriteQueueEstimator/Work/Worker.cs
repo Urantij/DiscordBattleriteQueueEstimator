@@ -8,20 +8,22 @@ namespace DiscordBattleriteQueueEstimator.Work;
 public partial class Worker : IHostedService
 {
     private readonly Database _database;
+    private readonly IHostApplicationLifetime _lifetime;
     private readonly ILogger<Worker> _logger;
 
     private readonly List<OnlineUser> _users = new();
 
-    private readonly object _loopLocker = new();
+    private readonly Lock _loopLocker = new();
     private readonly Queue<UserInfo> _queue = new();
     private bool _looping = false;
 
     // "In 3v3 Arena | 0-0 | Bo5"
     public static readonly Regex ArenaRegex = MakeArenaRegex();
 
-    public Worker(Discorb discorb, Database database, ILogger<Worker> logger)
+    public Worker(Discorb discorb, Database database, IHostApplicationLifetime lifetime, ILogger<Worker> logger)
     {
         _database = database;
+        _lifetime = lifetime;
         _logger = logger;
 
         discorb.UserRped += DiscorbOnUserRped;
@@ -96,7 +98,7 @@ public partial class Worker : IHostedService
 
     private async Task LoopAsync()
     {
-        while (true)
+        while (!_lifetime.ApplicationStopping.IsCancellationRequested)
         {
             UserInfo? userNewInfo;
             lock (_loopLocker)
