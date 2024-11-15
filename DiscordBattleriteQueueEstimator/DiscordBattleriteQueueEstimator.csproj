@@ -8,6 +8,7 @@
     </PropertyGroup>
     <PropertyGroup>
         <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+        <PublishTrimmed>true</PublishTrimmed>
         <PublishAot>true</PublishAot>
         <SelfContained>true</SelfContained>
         <InterceptorsNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.EntityFrameworkCore.GeneratedInterceptors</InterceptorsNamespaces>

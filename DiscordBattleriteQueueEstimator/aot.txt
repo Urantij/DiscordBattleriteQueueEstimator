@@ -125,6 +125,55 @@ dotnet ef migrations add Migration_Name
 // предполагается, что на сервере есть дотнет. если нет, нужно добавить аргумент --self-contained. селф контейнед весит 100МБ, но селф контейнед 30МБ
 dotnet ef migrations bundle -r linux-x64 --force
 
+кстати, без дискорд конфига он не сможет сделать бандлер, потому что он не сможет собрать сервис без конфига. хд.
+
+кстати у меня на манжаро он билдит с GLIBC_2.38, а на дебиан 12 ласт версия 2.36. удачи. у мя на впс оно компилировалось 3 минуты после чего вылетело с ошибкой 137 - недостаточно памяти. икс дэ дэ
+ну арендую на пару часиков инстанс помощнее, увы
+
+...
+
+apt update
+apt -y upgrade
+
+wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
+sudo apt-get update && \
+  sudo apt-get install -y dotnet-sdk-9.0
+sudo apt -y install build-essential git zip
+
+git clone -b aot https://github.com/Urantij/DiscordBattleriteQueueEstimator
+cd DiscordBattleriteQueueEstimator/DiscordBattleriteQueueEstimator
+
+sed -i '/  "Logging": {/c\"Discord":{"Token":"empty"},\n  "Logging": {' ./appsettings.json
+
+dotnet ef dbcontext optimize --precompile-queries --nativeaot -o Generated
+sed -i '/using DiscordBattleriteQueueEstimator.Data;/c\using DiscordBattleriteQueueEstimator.Data;\nusing DiscordBattleriteQueueEstimator.Data.Models;' ./Generated/HeroCommand.EFInterceptors.MyContext.cs
+sed -i '/using DiscordBattleriteQueueEstimator.Data;/c\using DiscordBattleriteQueueEstimator.Data;\nusing DiscordBattleriteQueueEstimator.Data.Models;' ./Generated/TimeCommand.EFInterceptors.MyContext.cs
+
+dotnet ef migrations bundle -r linux-x64 --force
+
+dotnet publish -r linux-x64 -o ~/Release
+
+cp ./efbundle ~/Release/
+
+cd ~
+zip -r release.zip ./Release/*
+
+scp -i ./key root@$Ip:/root/release.zip ./Documents
+
+...
+
+мне надоело руками это делать, а автофиксов через консоль не придумали
+sed -i '/using DiscordBattleriteQueueEstimator.Data;/c\using DiscordBattleriteQueueEstimator.Data;\nusing DiscordBattleriteQueueEstimator.Data.Models;' ./Generated/HeroCommand.EFInterceptors.MyContext.cs
+sed -i '/using DiscordBattleriteQueueEstimator.Data;/c\using DiscordBattleriteQueueEstimator.Data;\nusing DiscordBattleriteQueueEstimator.Data.Models;' ./Generated/TimeCommand.EFInterceptors.MyContext.cs
+
+...
+
+кстати, тул глобально у меня не работает, тока локально
+dotnet new tool-manifest
+dotnet tool install --local dotnet-ef
+
 ...
 
 если бы неймспейсы генерировались нормально, я бы включил автогенерацию, чтобы каждое новое обращение к бд не требовало перекомпиляции.
