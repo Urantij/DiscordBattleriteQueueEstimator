@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace DiscordBattleriteQueueEstimator.Data;
+namespace DiscordBattleriteQueueEstimator.Data.Models;
 
 public class DbUserStatus
 {

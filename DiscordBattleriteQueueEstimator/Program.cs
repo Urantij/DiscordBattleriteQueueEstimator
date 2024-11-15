@@ -3,7 +3,6 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using DiscordBattleriteQueueEstimator.Data;
 using DiscordBattleriteQueueEstimator.Discord;
-// using DiscordBattleriteQueueEstimator.Generated;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -34,14 +33,8 @@ public class Program
             if (discordNode == null)
                 throw new Exception("Дискорд конфига не вижу");
 
-#pragma warning disable IL3050
-#pragma warning disable IL2026
-            DiscorbConfig? config = discordNode.Deserialize<DiscorbConfig>(new JsonSerializerOptions()
-            {
-                TypeInfoResolver = DiscorbConfigContext.Default
-            });
-#pragma warning restore IL2026
-#pragma warning restore IL3050
+            DiscorbConfig? config =
+                discordNode.Deserialize(typeof(DiscorbConfig), DiscorbConfigContext.Default) as DiscorbConfig;
             if (config == null)
                 throw new Exception("Дискорд конфига не читается");
 
@@ -53,14 +46,13 @@ public class Program
         builder.Services.AddDbContextFactory<MyContext>(optionsBuilder =>
         {
             optionsBuilder.UseSqlite($"Data Source=db.sqlite;");
-            // optionsBuilder.UseModel(MyContextModel.Instance);
         });
 
         builder.Services.AddSingleton<Database>();
 
         builder.Services.AddSingleton<Discorb>();
         builder.Services.AddHostedService<Discorb>(p => p.GetRequiredService<Discorb>());
-        
+
         builder.Services.AddSingleton<DiscorbCommander>();
         builder.Services.AddHostedService<DiscorbCommander>(p => p.GetRequiredService<DiscorbCommander>());
 
@@ -75,8 +67,7 @@ public class Program
             logger.LogInformation("info");
             logger.LogDebug("debug");
 
-            using var context = provider.ServiceProvider.GetRequiredService<MyContext>();
-            if (!File.Exists("efbundle"))
+            if (!File.Exists("./efbundle"))
             {
                 throw new Exception("efbundle не найден");
             }
@@ -96,7 +87,7 @@ public class Program
             if (code != 0)
                 throw new Exception($"Код выхода миграции {code}");
         }
-        
+
         host.Run();
     }
 }

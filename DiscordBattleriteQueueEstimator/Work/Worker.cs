@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using DiscordBattleriteQueueEstimator.Data;
+using DiscordBattleriteQueueEstimator.Data.Models;
 using DiscordBattleriteQueueEstimator.Discord;
 
 namespace DiscordBattleriteQueueEstimator.Work;
@@ -138,11 +139,7 @@ public partial class Worker : IHostedService
                 DbUser? dbUser = await _database.LoadUserAsync(userNewInfo.Id);
                 if (dbUser == null)
                 {
-                    dbUser = new DbUser
-                    {
-                        DiscordId = userNewInfo.Id
-                    };
-                    await _database.CreateUserAsync(dbUser);
+                    dbUser = await _database.CreateUserAsync(userNewInfo.Id);
                     _logger.LogDebug("Создали пользователя {id}", dbUser.Id);
                 }
                 else

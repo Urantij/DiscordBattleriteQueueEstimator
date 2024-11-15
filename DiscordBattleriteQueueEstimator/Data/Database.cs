@@ -1,3 +1,4 @@
+using DiscordBattleriteQueueEstimator.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace DiscordBattleriteQueueEstimator.Data;
@@ -16,13 +17,20 @@ public class Database
         return _factory.CreateDbContextAsync();
     }
 
-    public async Task CreateUserAsync(DbUser user)
+    public async Task<DbUser> CreateUserAsync(ulong discordId)
     {
         await using MyContext context = await _factory.CreateDbContextAsync();
+
+        DbUser user = new()
+        {
+            DiscordId = discordId
+        };
 
         context.Users.Add(user);
 
         await context.SaveChangesAsync();
+
+        return user;
     }
 
     public async Task<DbUser?> LoadUserAsync(ulong discordId)

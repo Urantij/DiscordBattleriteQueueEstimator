@@ -1,4 +1,4 @@
-namespace DiscordBattleriteQueueEstimator.Data;
+namespace DiscordBattleriteQueueEstimator.Data.Models;
 
 public record RpInfo(string? Hero, string? Details, string State, int? PartySize)
 {

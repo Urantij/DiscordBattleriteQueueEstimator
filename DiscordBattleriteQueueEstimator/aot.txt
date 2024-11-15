@@ -87,3 +87,60 @@ System.NotSupportedException: 'Microsoft.EntityFrameworkCore.ChangeTracking.Valu
          at DiscordBattleriteQueueEstimator.Work.Worker.<LoopAsync>d__14.MoveNext() + 0x1cf
       --- End of stack trace from previous location ---
          at DiscordBattleriteQueueEstimator.Work.Worker.<<DiscorbOnUserRped>b__13_0>d.MoveNext() + 0x5b
+
+и кстати в подсказке он говорит, что просто заюзайте ещё раз команду, если модели изменятся. он сыпет ошибками, если не удалить всё.
+
+оказалось, нужно было просто зарегать свой велью компарер для юлонг.
+икс дэ дэ
+
+НО ЕГО НЕЛЬЗЯ СДЕЛАТЬ ГЛОБАЛЬНО, ДЛЯ КАЖДОГО ПОЛЯ НАСТАРАИВАТЬ НУЖНО. оогооо, вот так хуйня
+https://learn.microsoft.com/en-us/ef/core/modeling/bulk-configuration#example-default-length-for-all-string-properties
+если конвекции поддерживаю, мы гучи.
+мы гучи.
+
+переместил модельки в свои неймспейсы, сгенерированный код опять сфейлился добавить референс. ну ладно, я не гордый, сам добавлю
+
+бандлер пишет
+Don't forget to copy appsettings.json alongside your bundle if you need it to apply migrations.
+я не пон зачем. он ниче с ним не делает
+
+АОТ. ИТОГИ.
+
+- пришлось писать комперер
+- неймспейсы сами не включаются
+- енсур криеетед или миграция не работают, нужно создавать свой бандлер
+- опции практически неюзабельны
+- компиляция 3 минуты
+- размер исполняемого файла - 44МБ. дбг - 121МБ
+
+условия содержания
+
+- нужно пересобирать генерированный код, когда создаётся новое обращение к бд или вообще любое изменение кода, так как интерцепторы привязаны к номеру строки
+dotnet ef dbcontext optimize --precompile-queries --nativeaot -o Generated
+- нужно создавать миграцию, когда меняется модель бд (не связано с аот, так всегда)
+dotnet ef migrations add Migration_Name
+- нужно компилировать бандлер, когда меняется модель бд
+// предполагается, что на сервере есть дотнет. если нет, нужно добавить аргумент --self-contained. селф контейнед весит 100МБ, но селф контейнед 30МБ
+dotnet ef migrations bundle -r linux-x64 --force
+
+...
+
+если бы неймспейсы генерировались нормально, я бы включил автогенерацию, чтобы каждое новое обращение к бд не требовало перекомпиляции.
+но увырге. лучше я включу генерацию руками, и чтобы оно фейлилось в самом начале паблиша с жалобой на неймспейс.
+
+возможно, можно самому следить за состоянием миграции и вручную делать миграции, юзая генерируемые Migration, но мне впадлу пока что
+https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/applying?tabs=dotnet-core-cli#apply-migrations-at-runtime
+Carefully consider before using this approach in production. Experience has shown that the simplicity of this deployment strategy is outweighed by the issues it creates. Consider generating SQL scripts from migrations instead.
+то есть... ето возможно
+
+<Features>InterceptorsPreview</Features> оказалось ненужно
+
+<InterceptorsNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.EntityFrameworkCore.GeneratedInterceptors</InterceptorsNamespaces>
+<InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.EntityFrameworkCore.GeneratedInterceptors</InterceptorsPreviewNamespaces>
+и то и то работает, я выбираю первое
+
+<PackageReference Include="Microsoft.EntityFrameworkCore.Tasks" Version="9.0.0">
+    <PrivateAssets>all</PrivateAssets>
+    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+</PackageReference>
+в муте клоун

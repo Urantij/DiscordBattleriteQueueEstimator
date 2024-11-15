@@ -1,3 +1,4 @@
+using DiscordBattleriteQueueEstimator.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -26,6 +27,8 @@ public class MyContext : DbContext
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         base.ConfigureConventions(configurationBuilder);
+
+        configurationBuilder.Conventions.Add(_ => new UlongConvection());
 
         configurationBuilder.Properties<DateTime>()
             .HaveConversion<DateTimeToBinaryConverter>();

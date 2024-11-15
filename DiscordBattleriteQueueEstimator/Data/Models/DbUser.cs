@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace DiscordBattleriteQueueEstimator.Data;
+namespace DiscordBattleriteQueueEstimator.Data.Models;
 
 public class DbUser
 {

@@ -1,5 +1,5 @@
 using System.Net;
-using DiscordBattleriteQueueEstimator.Data;
+using DiscordBattleriteQueueEstimator.Data.Models;
 using DiscordBattleriteQueueEstimator.Discord.Sock;
 using Microsoft.Extensions.Options;
 using NetCord;
