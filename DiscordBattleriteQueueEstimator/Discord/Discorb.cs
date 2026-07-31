@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using NetCord;
 using NetCord.Gateway;
 using NetCord.Gateway.WebSockets;
+using NetCord.Logging;
 using NetCord.Rest;
 
 namespace DiscordBattleriteQueueEstimator.Discord;
@@ -55,26 +56,12 @@ public class Discorb : IHostedService
             RestClientConfiguration = restClientConfiguration,
             WebSocketConnectionProvider = webSocketConnectionProvider,
             Intents = GatewayIntents.GuildUsers | GatewayIntents.GuildPresences | GatewayIntents.AllNonPrivileged,
+            Logger = new ConsoleLogger()
         });
-        _client.Log += ClientOnLog;
         _clientLogger = loggerFactory.CreateLogger<GatewayClient>();
 
         _client.PresenceUpdate += ClientOnPresenceUpdate;
         _client.GuildCreate += ClientOnGuildCreate;
-    }
-
-    private ValueTask ClientOnLog(LogMessage arg)
-    {
-        LogLevel level = arg.Severity switch
-        {
-            LogSeverity.Error => LogLevel.Error,
-            LogSeverity.Info => LogLevel.Debug,
-            _ => LogLevel.Warning
-        };
-
-        _clientLogger.Log(level, "{message} ({description})", arg.Message, arg.Description);
-
-        return ValueTask.CompletedTask;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -89,7 +76,7 @@ public class Discorb : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        return _client.CloseAsync(cancellationToken: cancellationToken);
+        return _client.CloseAsync(cancellationToken: cancellationToken).AsTask();
     }
 
     public GatewayClient GetClient()
@@ -98,11 +85,11 @@ public class Discorb : IHostedService
     private ValueTask ClientOnPresenceUpdate(Presence arg)
     {
         // срабатывает и когда уходит в офлаин.
-        
+
         (RpInfo? rpInfo, bool fakeRp) = Do(arg);
-        
+
         UserRped?.Invoke(new UserInfo(arg.User.Id, fakeRp, rpInfo, DateTimeOffset.UtcNow));
-        
+
         return ValueTask.CompletedTask;
     }
 
@@ -110,27 +97,27 @@ public class Discorb : IHostedService
     {
         if (arg.Guild?.Presences is null)
             return ValueTask.CompletedTask;
-        
+
         foreach (KeyValuePair<ulong, Presence> member in arg.Guild.Presences)
         {
             (RpInfo? rpInfo, bool fakeRp) = Do(member.Value);
-    
+
             UserRped?.Invoke(new UserInfo(member.Value.User.Id, fakeRp, rpInfo, DateTimeOffset.UtcNow));
         }
-    
+
         return ValueTask.CompletedTask;
     }
-    
+
     private (RpInfo? rpInfo, bool fakeRp) Do(Presence presence)
     {
         UserActivity? activity = presence.Activities.FirstOrDefault(IsBrRp);
-        
+
         if (activity == null)
             return (null, false);
-    
+
         bool fakeRp;
         RpInfo? rpInfo;
-    
+
         // Это фейковый рп, как если бы его не было.
         // Приходит, если в данный момент у игрока клиент свёрнут.
         // Возможно, стоит добавить проверку на наличие State. Он вроде всегда есть.
@@ -144,13 +131,14 @@ public class Discorb : IHostedService
             // string.Empty нужен, чтобы модель в базе могла быть определена как отсутствующая
             // если все проперти нулл, то тада непонятно короче, был рп вообще или нет.
             fakeRp = false;
+            int? size = (int?)(activity.Party?.Size?.CurrentSize ?? null);
             rpInfo = new RpInfo(activity.Assets?.SmallText, activity.Details,
-                activity.State ?? string.Empty, activity.Party?.CurrentSize);
+                activity.State ?? string.Empty, size);
         }
-    
+
         return (rpInfo, fakeRp);
     }
-    
+
     private bool IsBrRp(UserActivity activity)
     {
         return activity.ApplicationId == BattleriteAppId;
