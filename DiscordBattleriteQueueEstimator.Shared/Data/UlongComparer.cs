@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
-namespace DiscordBattleriteQueueEstimator.Data;
+namespace DiscordBattleriteQueueEstimator.Shared.Data;
 
 public class UlongComparer : ValueComparer<ulong>
 {

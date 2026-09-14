@@ -8,24 +8,29 @@
     </PropertyGroup>
     <PropertyGroup>
         <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
-        <PublishTrimmed>true</PublishTrimmed>
+        <!--        <PublishTrimmed>true</PublishTrimmed>-->
         <PublishAot>true</PublishAot>
         <SelfContained>true</SelfContained>
+        <InvariantGlobalization>true</InvariantGlobalization>
         <InterceptorsNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.EntityFrameworkCore.GeneratedInterceptors</InterceptorsNamespaces>
+        <OptimizationPreference>Size</OptimizationPreference>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="10.0.10"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10">
+        <!--        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="10.0.10"/>-->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10"/>
-        <!--        <PackageReference Include="Microsoft.EntityFrameworkCore.Tasks" Version="9.0.0">-->
+        <!--        <PackageReference Include="Microsoft.EntityFrameworkCore.Tasks" Version="10.0.12">-->
         <!--            <PrivateAssets>all</PrivateAssets>-->
         <!--            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
         <!--        </PackageReference>-->
-        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.10"/>
-        <PackageReference Include="NetCord" Version="1.0.0-beta.11"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12"/>
+        <PackageReference Include="NetCord" Version="1.0.0-beta.20"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\DiscordBattleriteQueueEstimator.Shared\DiscordBattleriteQueueEstimator.Shared.csproj"/>
     </ItemGroup>
 </Project>

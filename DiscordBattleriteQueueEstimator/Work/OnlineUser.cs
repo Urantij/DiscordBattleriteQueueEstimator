@@ -1,4 +1,4 @@
-using DiscordBattleriteQueueEstimator.Data.Models;
+using DiscordBattleriteQueueEstimator.Shared.Data.Models;
 
 namespace DiscordBattleriteQueueEstimator.Work;
 

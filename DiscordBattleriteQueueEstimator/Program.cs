@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using DiscordBattleriteQueueEstimator.Data;
 using DiscordBattleriteQueueEstimator.Discord;
+using DiscordBattleriteQueueEstimator.Shared.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -30,22 +31,21 @@ public class Program
             string settingsContent = File.ReadAllText("./appsettings.json");
 
             JsonNode? discordNode = JsonNode.Parse(settingsContent)?["Discord"];
-            if (discordNode == null)
-                throw new Exception("Дискорд конфига не вижу");
-
             DiscorbConfig? config =
-                discordNode.Deserialize(typeof(DiscorbConfig), DiscorbConfigContext.Default) as DiscorbConfig;
-            if (config == null)
-                throw new Exception("Дискорд конфига не читается");
+                discordNode?.Deserialize(typeof(DiscorbConfig), DiscorbConfigContext.Default) as DiscorbConfig;
+            if (config != null)
+            {
+                OptionsWrapper<DiscorbConfig> optionsWrapper = new(config);
 
-            OptionsWrapper<DiscorbConfig> optionsWrapper = new(config);
-
-            builder.Services.AddSingleton<IOptions<DiscorbConfig>>(_ => optionsWrapper);
+                builder.Services.AddSingleton<IOptions<DiscorbConfig>>(_ => optionsWrapper);
+            }
         }
 
-        builder.Services.AddDbContextFactory<MyContext>(optionsBuilder =>
+        builder.Services.AddDbContextFactory<MyPoorLilContext>(optionsBuilder =>
         {
             optionsBuilder.UseSqlite($"Data Source=db.sqlite;");
+            // этого друга нужно закомментить перед первой CompiledModels компиляции, удачи!
+            optionsBuilder.UseModel(DiscordBattleriteQueueEstimator.CompiledModels.MyPoorLilContextModel.Instance);
         });
 
         builder.Services.AddSingleton<Database>();
@@ -67,12 +67,28 @@ public class Program
             logger.LogInformation("info");
             logger.LogDebug("debug");
 
+            // проверка, есть ли дискорд
+            {
+                IOptions<DiscorbConfig>? discord = provider.ServiceProvider.GetService<IOptions<DiscorbConfig>>();
+                if (discord == null)
+                    throw new Exception("Дискорд конфига не читается");
+            }
+
             if (!File.Exists("./efbundle"))
             {
                 throw new Exception("efbundle не найден");
             }
 
             using Process process = new();
+
+            string? connectionString =
+                provider.ServiceProvider.GetRequiredService<IConfiguration>().GetConnectionString("db");
+            if (connectionString != null)
+            {
+                process.StartInfo.ArgumentList.Add("--connection");
+                process.StartInfo.ArgumentList.Add(connectionString);
+            }
+
             process.StartInfo.FileName = "./efbundle";
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;

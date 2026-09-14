@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using DiscordBattleriteQueueEstimator.Data;
-using DiscordBattleriteQueueEstimator.Data.Models;
 using DiscordBattleriteQueueEstimator.Discord;
+using DiscordBattleriteQueueEstimator.Shared.Data.Models;
 
 namespace DiscordBattleriteQueueEstimator.Work;
 
@@ -123,6 +123,22 @@ public partial class Worker : IHostedService
                 // Ещё иногда бывает, что в матче становится счёт 0-1, но клиент присылает 2 статуса
                 // Сначала 1-0, а потом исправляет на 0-1. И так по паре раз за матч может быть.
                 // Но это ловить мне впадлу.
+                // Разница между ними может быть в 10 секунд лол, но может это я перезапускал, все другие в ту же секунду
+                // При этом бывает, что оно 2 раза пишет криво и исправляет, а на третий уже нет
+                // было ваще такое
+                // Croak	In 3v3 Arena | 0-0 | Bo5	2026-09-10 15:39:49
+                // Croak	In 3v3 Arena | 1-0 | Bo5	2026-09-10 15:42:46 это правда
+                // Croak	In 3v3 Arena | 0-1 | Bo5	2026-09-10 15:42:57 ???
+                // Croak	In 3v3 Arena | 1-0 | Bo5	2026-09-10 15:42:57 исправил
+                // Croak	In 3v3 Arena | 2-0 | Bo5	2026-09-10 15:44:14 правда
+                // Croak	In 3v3 Arena | 0-2 | Bo5	2026-09-10 15:44:25 ???
+                // Croak	In 3v3 Arena | 2-0 | Bo5	2026-09-10 15:44:25 исправил
+                // Croak	In 3v3 Arena | 2-1 | Bo5	2026-09-10 15:45:52 правда
+                // Croak	In 3v3 Arena | 1-2 | Bo5	2026-09-10 15:46:03 ???
+                // Croak	In 3v3 Arena | 2-1 | Bo5	2026-09-10 15:46:03 исправил
+                // Croak	In 3v3 Arena | 2-2 | Bo5	2026-09-10 15:47:50 правда
+                // Croak	In 3v3 Arena | 2-3 | Bo5	2026-09-10 15:49:56 правда
+                // похоже он пишет правду сначала, потом иногда обсирается, тут же исправляет посреди раунда, а потом пишет правду, когда раунд действительно заканчивается
             }
 
             OnlineUser? user;

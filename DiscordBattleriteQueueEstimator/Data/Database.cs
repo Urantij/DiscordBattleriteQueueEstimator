@@ -1,25 +1,26 @@
-using DiscordBattleriteQueueEstimator.Data.Models;
+using DiscordBattleriteQueueEstimator.Shared.Data;
+using DiscordBattleriteQueueEstimator.Shared.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace DiscordBattleriteQueueEstimator.Data;
 
 public class Database
 {
-    private readonly IDbContextFactory<MyContext> _factory;
+    private readonly IDbContextFactory<MyPoorLilContext> _factory;
 
-    public Database(IDbContextFactory<MyContext> factory)
+    public Database(IDbContextFactory<MyPoorLilContext> factory)
     {
         _factory = factory;
     }
 
-    public Task<MyContext> CreateContextAsync()
+    public Task<MyPoorLilContext> CreateContextAsync()
     {
         return _factory.CreateDbContextAsync();
     }
 
     public async Task<DbUser> CreateUserAsync(ulong discordId)
     {
-        await using MyContext context = await _factory.CreateDbContextAsync();
+        await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
         DbUser user = new()
         {
@@ -37,7 +38,7 @@ public class Database
     {
         ulong id = discordId;
 
-        await using MyContext context = await _factory.CreateDbContextAsync();
+        await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
         return await context.Users.FirstOrDefaultAsync(u => u.DiscordId == id);
     }
@@ -56,7 +57,7 @@ public class Database
 
     public async Task InsertStatusAsync(DbUserStatus status)
     {
-        await using MyContext context = await _factory.CreateDbContextAsync();
+        await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
         context.Statuses.Add(status);
 
@@ -65,7 +66,7 @@ public class Database
 
     public async Task<int?> GetLastStatusIdAsync()
     {
-        await using MyContext context = await _factory.CreateDbContextAsync();
+        await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
         return await context.Statuses
             .AsNoTrackingWithIdentityResolution()
@@ -76,7 +77,7 @@ public class Database
 
     public async Task CreateLastPointAsync(int statusId, DateTimeOffset date)
     {
-        await using MyContext context = await _factory.CreateDbContextAsync();
+        await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
         context.Points.Add(new DbClearPoint()
         {
@@ -89,7 +90,7 @@ public class Database
 
     public async Task<int?> GetLastPointStatusAsync()
     {
-        await using MyContext context = await _factory.CreateDbContextAsync();
+        await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
         return await context.Points
             .AsNoTrackingWithIdentityResolution()

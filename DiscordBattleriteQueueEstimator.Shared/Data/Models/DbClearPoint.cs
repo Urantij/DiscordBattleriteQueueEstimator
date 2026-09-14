@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace DiscordBattleriteQueueEstimator.Data.Models;
+namespace DiscordBattleriteQueueEstimator.Shared.Data.Models;
 
 public class DbClearPoint
 {

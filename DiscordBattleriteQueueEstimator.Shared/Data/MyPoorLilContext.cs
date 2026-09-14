@@ -1,21 +1,26 @@
-using DiscordBattleriteQueueEstimator.Data.Models;
+using DiscordBattleriteQueueEstimator.Shared.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace DiscordBattleriteQueueEstimator.Data;
+namespace DiscordBattleriteQueueEstimator.Shared.Data;
 
-public class MyContext : DbContext
+public class MyPoorLilContext : DbContext
 {
     public DbSet<DbUser> Users { get; set; }
     public DbSet<DbUserStatus> Statuses { get; set; }
     public DbSet<DbClearPoint> Points { get; set; }
 
-    public MyContext()
+    public MyPoorLilContext()
     {
     }
 
-    public MyContext(DbContextOptions options) : base(options)
+    public MyPoorLilContext(DbContextOptions options) : base(options)
     {
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseSqlite("Data Source=db.sqlite;");
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

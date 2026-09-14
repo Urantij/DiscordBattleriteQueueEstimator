@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using DiscordBattleriteQueueEstimator.Data;
+using DiscordBattleriteQueueEstimator.Shared.Data;
 using Microsoft.EntityFrameworkCore;
 using NetCord;
 using NetCord.Gateway;
@@ -25,7 +26,7 @@ public class TimeCommand : BaseCommand
 
     public override async Task DoAsync(GatewayClient sender, SlashCommandInteraction args)
     {
-        await using MyContext context = await _database.CreateContextAsync();
+        await using MyPoorLilContext context = await _database.CreateContextAsync();
 
         ulong targetId = args.User.Id;
         int? userId = await context.Users

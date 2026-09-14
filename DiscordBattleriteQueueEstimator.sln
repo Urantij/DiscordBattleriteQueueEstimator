@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordBattleriteQueueEstimator", "DiscordBattleriteQueueEstimator\DiscordBattleriteQueueEstimator.csproj", "{033A6C5D-C435-47AE-A71E-B307E8A6182E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordBattleriteQueueEstimator.Shared", "DiscordBattleriteQueueEstimator.Shared\DiscordBattleriteQueueEstimator.Shared.csproj", "{FEEF759D-3357-4CAE-A0B5-47C1688041D7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{033A6C5D-C435-47AE-A71E-B307E8A6182E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{033A6C5D-C435-47AE-A71E-B307E8A6182E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{033A6C5D-C435-47AE-A71E-B307E8A6182E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEEF759D-3357-4CAE-A0B5-47C1688041D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEEF759D-3357-4CAE-A0B5-47C1688041D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEEF759D-3357-4CAE-A0B5-47C1688041D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEEF759D-3357-4CAE-A0B5-47C1688041D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

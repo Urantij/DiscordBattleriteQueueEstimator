@@ -1,15 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace DiscordBattleriteQueueEstimator.Data.Models;
+namespace DiscordBattleriteQueueEstimator.Shared.Data.Models;
 
 public class DbUserStatus
 {
-    [Key]
-    public int Id { get; set; }
-    
-    [ForeignKey(nameof(User))]
-    public int UserId { get; set; }
+    [Key] public int Id { get; set; }
+
+    [ForeignKey(nameof(User))] public int UserId { get; set; }
     public DbUser User { get; set; }
 
     /// <summary>
@@ -18,10 +16,11 @@ public class DbUserStatus
     /// Это типа fake rp
     /// </summary>
     public bool FakeRp { get; set; }
+
     /// <summary>
     /// Если нулл, рп нет. Если <see cref="FakeRp"/> false, то юзер офлаин.
     /// </summary>
     public RpInfo? RpInfo { get; set; }
-    
+
     public DateTimeOffset Date { get; set; }
 }

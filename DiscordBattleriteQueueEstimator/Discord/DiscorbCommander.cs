@@ -85,7 +85,8 @@ public class DiscorbCommander : IHostedService
                 _logger.LogDebug("Команда без дма, меняем, айди {id}", applicationCommand.Id);
                 applicationCommand = await client.Rest.ModifyGlobalApplicationCommandAsync(
                     applicationCommand.ApplicationId, applicationCommand.Id,
-                    action => action.AddContexts([InteractionContextType.BotDMChannel]), cancellationToken: cancellationToken);
+                    action => action.AddContexts([InteractionContextType.BotDMChannel]),
+                    cancellationToken: cancellationToken);
             }
 
             commandInfo.Id = applicationCommand.Id;
