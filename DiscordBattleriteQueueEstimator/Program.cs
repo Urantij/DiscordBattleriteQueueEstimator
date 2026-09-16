@@ -59,6 +59,9 @@ public class Program
         builder.Services.AddSingleton<Work.Worker>();
         builder.Services.AddHostedService<Work.Worker>(p => p.GetRequiredService<Work.Worker>());
 
+        builder.Services.AddSingleton<Work.MatchObserver>();
+        builder.Services.AddHostedService<Work.MatchObserver>(p => p.GetRequiredService<Work.MatchObserver>());
+
         IHost host = builder.Build();
 
         using (IServiceScope provider = host.Services.CreateScope())

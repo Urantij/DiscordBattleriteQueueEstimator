@@ -9,4 +9,5 @@ public class DbUser
     public ulong DiscordId { get; set; }
 
     public ICollection<DbUserStatus> Statuses { get; set; }
+    public ICollection<DbUserMatch> Matches { get; set; }
 }

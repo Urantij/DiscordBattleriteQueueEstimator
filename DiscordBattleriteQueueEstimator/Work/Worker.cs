@@ -2,29 +2,62 @@ using System.Text.RegularExpressions;
 using DiscordBattleriteQueueEstimator.Data;
 using DiscordBattleriteQueueEstimator.Discord;
 using DiscordBattleriteQueueEstimator.Shared.Data.Models;
+using DiscordBattleriteQueueEstimator.Utils;
 
 namespace DiscordBattleriteQueueEstimator.Work;
+
+public class NewMatchStatusData(
+    OnlineUser onlineUser,
+    string hero,
+    int score1,
+    int score2,
+    int bo,
+    int partySize,
+    DateTimeOffset date)
+{
+    public OnlineUser OnlineUser { get; } = onlineUser;
+
+    public string Hero { get; } = hero;
+
+    public int Score1 { get; } = score1;
+    public int Score2 { get; } = score2;
+    public int Bo { get; } = bo;
+
+    public int PartySize { get; } = partySize;
+
+    public DateTimeOffset Date { get; } = date;
+}
+
+public class NewGenericStatusData(OnlineUser onlineUser, string? details, DateTimeOffset date)
+{
+    public OnlineUser OnlineUser { get; } = onlineUser;
+
+    public string? Details { get; } = details;
+
+    public DateTimeOffset Date { get; } = date;
+}
 
 public partial class Worker : IHostedService
 {
     private readonly Database _database;
-    private readonly IHostApplicationLifetime _lifetime;
     private readonly ILogger<Worker> _logger;
 
     private readonly List<OnlineUser> _users = new();
 
-    private readonly Lock _loopLocker = new();
-    private readonly Queue<UserInfo> _queue = new();
-    private bool _looping = false;
+    private readonly SoloLooper _looper;
 
     // "In 3v3 Arena | 0-0 | Bo5"
     public static readonly Regex ArenaRegex = MakeArenaRegex();
 
-    public Worker(Discorb discorb, Database database, IHostApplicationLifetime lifetime, ILogger<Worker> logger)
+    public event Action<NewMatchStatusData>? NewMatchStatusArrived;
+    public event Action<NewGenericStatusData>? NewGenericStatusArrived;
+
+    public Worker(Discorb discorb, Database database, ILogger<Worker> logger)
     {
         _database = database;
-        _lifetime = lifetime;
         _logger = logger;
+
+        _looper = new SoloLooper(_logger);
 
         discorb.UserRped += DiscorbOnUserRped;
     }
@@ -46,6 +79,8 @@ public partial class Worker : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
+        _looper.Stop();
+
         return Task.CompletedTask;
     }
 
@@ -75,130 +110,100 @@ public partial class Worker : IHostedService
 
     private void DiscorbOnUserRped(UserInfo obj)
     {
-        lock (_loopLocker)
-        {
-            _queue.Enqueue(obj);
-            if (_looping)
-                return;
-
-            _looping = true;
-            Task.Run(async () =>
-            {
-                try
-                {
-                    await LoopAsync();
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "loop сломався");
-                }
-            });
-        }
+        _looper.Add(() => ProcessAsync(obj));
     }
 
-    private async Task LoopAsync()
+    private async Task ProcessAsync(UserInfo userNewInfo)
     {
-        while (!_lifetime.ApplicationStopping.IsCancellationRequested)
+        Match? matchParsedRegex = null;
+        if (userNewInfo.Info?.Details != null)
         {
-            UserInfo? userNewInfo;
-            lock (_loopLocker)
+            matchParsedRegex = ArenaRegex.Match(userNewInfo.Info.Details);
+            if (matchParsedRegex.Success)
             {
-                if (!_queue.TryDequeue(out userNewInfo))
-                {
-                    _looping = false;
+                // Такая багулина бывает и забивает логи. Скипаем.
+                if (matchParsedRegex.Groups["Bo"].Value == "0")
                     return;
-                }
             }
-
-            if (userNewInfo.Info?.Details != null)
-            {
-                Match match = ArenaRegex.Match(userNewInfo.Info.Details);
-                if (match.Success)
-                {
-                    // Такая багулина бывает и забивает логи. Скипаем.
-                    if (match.Groups["Bo"].Value == "0")
-                        continue;
-                }
-
-                // Ещё иногда бывает, что в матче становится счёт 0-1, но клиент присылает 2 статуса
-                // Сначала 1-0, а потом исправляет на 0-1. И так по паре раз за матч может быть.
-                // Но это ловить мне впадлу.
-                // Разница между ними может быть в 10 секунд лол, но может это я перезапускал, все другие в ту же секунду
-                // При этом бывает, что оно 2 раза пишет криво и исправляет, а на третий уже нет
-                // было ваще такое
-                // Croak	In 3v3 Arena | 0-0 | Bo5	2026-09-10 15:39:49
-                // Croak	In 3v3 Arena | 1-0 | Bo5	2026-09-10 15:42:46 это правда
-                // Croak	In 3v3 Arena | 0-1 | Bo5	2026-09-10 15:42:57 ???
-                // Croak	In 3v3 Arena | 1-0 | Bo5	2026-09-10 15:42:57 исправил
-                // Croak	In 3v3 Arena | 2-0 | Bo5	2026-09-10 15:44:14 правда
-                // Croak	In 3v3 Arena | 0-2 | Bo5	2026-09-10 15:44:25 ???
-                // Croak	In 3v3 Arena | 2-0 | Bo5	2026-09-10 15:44:25 исправил
-                // Croak	In 3v3 Arena | 2-1 | Bo5	2026-09-10 15:45:52 правда
-                // Croak	In 3v3 Arena | 1-2 | Bo5	2026-09-10 15:46:03 ???
-                // Croak	In 3v3 Arena | 2-1 | Bo5	2026-09-10 15:46:03 исправил
-                // Croak	In 3v3 Arena | 2-2 | Bo5	2026-09-10 15:47:50 правда
-                // Croak	In 3v3 Arena | 2-3 | Bo5	2026-09-10 15:49:56 правда
-                // похоже он пишет правду сначала, потом иногда обсирается, тут же исправляет посреди раунда, а потом пишет правду, когда раунд действительно заканчивается
-            }
-
-            OnlineUser? user;
-            lock (_users)
-                user = _users.FirstOrDefault(u => u.User.DiscordId == userNewInfo.Id);
-
-            bool needStatusInsert = false;
-            if (user == null)
-            {
-                // Нет смысла записывать FakeRp.
-                // Он нужен только, чтобы убедиться в наличии какого-то события.
-                // То есть он нужен, только если проверять длину события ДО него.
-                if (userNewInfo.Info == null || userNewInfo.FakeRp)
-                    continue;
-
-                DbUser? dbUser = await _database.LoadUserAsync(userNewInfo.Id);
-                if (dbUser == null)
-                {
-                    dbUser = await _database.CreateUserAsync(userNewInfo.Id);
-                    _logger.LogDebug("Создали пользователя {id}", dbUser.Id);
-                }
-                else
-                {
-                    _logger.LogDebug("Загрузили пользователя {id}", dbUser.Id);
-                }
-
-                user = new OnlineUser(dbUser, userNewInfo.FakeRp, userNewInfo.Info);
-                lock (_users)
-                    _users.Add(user);
-
-                needStatusInsert = true;
-            }
-            else if (userNewInfo.Info == null)
-            {
-                if (userNewInfo.FakeRp)
-                {
-                    needStatusInsert = !user.LastRpFake;
-                }
-                else
-                {
-                    lock (_users)
-                        _users.Remove(user);
-
-                    needStatusInsert = true;
-                }
-            }
-            else if (user.LastInfo != userNewInfo.Info)
-            {
-                user.LastInfo = userNewInfo.Info;
-                needStatusInsert = true;
-            }
-
-            if (!needStatusInsert)
-                continue;
-
-            await _database.InsertStatusAsync(user.User.Id, userNewInfo.FakeRp, userNewInfo.Info,
-                userNewInfo.Date);
-            _logger.LogDebug("Записали статус пользователя {id} {isFake} {status}", user.User.Id, userNewInfo.FakeRp,
-                userNewInfo.Info);
         }
+
+        OnlineUser? user;
+        lock (_users)
+            user = _users.FirstOrDefault(u => u.User.DiscordId == userNewInfo.Id);
+
+        bool needStatusInsert = false;
+        if (user == null)
+        {
+            // Нет смысла записывать FakeRp.
+            // Он нужен только, чтобы убедиться в наличии какого-то события.
+            // То есть он нужен, только если проверять длину события ДО него.
+            if (userNewInfo.Info == null || userNewInfo.FakeRp)
+                return;
+
+            DbUser? dbUser = await _database.LoadUserAsync(userNewInfo.Id);
+            if (dbUser == null)
+            {
+                dbUser = await _database.CreateUserAsync(userNewInfo.Id);
+                _logger.LogDebug("Создали пользователя {id}", dbUser.Id);
+            }
+            else
+            {
+                _logger.LogDebug("Загрузили пользователя {id}", dbUser.Id);
+            }
+
+            user = new OnlineUser(dbUser, userNewInfo.FakeRp ? null : userNewInfo.Info);
+            lock (_users)
+                _users.Add(user);
+
+            needStatusInsert = true;
+        }
+        else if (userNewInfo.Info == null)
+        {
+            if (userNewInfo.FakeRp)
+            {
+                needStatusInsert = !user.IsLastRpFake();
+            }
+            else
+            {
+                lock (_users)
+                    _users.Remove(user);
+
+                needStatusInsert = true;
+            }
+        }
+        else if (user.GetLast() != userNewInfo.Info)
+        {
+            user.Add(userNewInfo.Info);
+            needStatusInsert = true;
+        }
+
+        if (!needStatusInsert)
+            return;
+
+        Task dbTask = _database.InsertStatusAsync(user.User.Id, userNewInfo.FakeRp, userNewInfo.Info,
+            userNewInfo.Date);
+
+        // int.Parse безопасно потому что регекс чекает на цифры. да в ТЕОРИИ там может быть странный набор цифр, но я не верю.
+        // херо и патисайз там всегда есть, но чтобы иде не плакала
+        if (matchParsedRegex != null && userNewInfo.Info?.Hero != null)
+        {
+            NewMatchStatusArrived?.Invoke(new NewMatchStatusData(user,
+                userNewInfo.Info.Hero,
+                int.Parse(matchParsedRegex.Groups["score1"].Value),
+                int.Parse(matchParsedRegex.Groups["score2"].Value),
+                int.Parse(matchParsedRegex.Groups["Bo"].Value),
+                userNewInfo.Info.PartySize ?? -1,
+                userNewInfo.Date));
+        }
+        else
+        {
+            NewGenericStatusArrived?.Invoke(new NewGenericStatusData(user, userNewInfo.Info?.Details,
+                userNewInfo.Date));
+        }
+
+        await dbTask;
+        _logger.LogDebug("Записали статус пользователя {id} {isFake} {status}", user.User.Id, userNewInfo.FakeRp,
+            userNewInfo.Info);
     }
 
     [GeneratedRegex(@"In (?<team1>\d+)v(?<team2>\d+) Arena \| (?<score1>\d+)-(?<score2>\d+) \| Bo(?<Bo>\d+)",

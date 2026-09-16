@@ -9,6 +9,7 @@ public class MyPoorLilContext : DbContext
     public DbSet<DbUser> Users { get; set; }
     public DbSet<DbUserStatus> Statuses { get; set; }
     public DbSet<DbClearPoint> Points { get; set; }
+    public DbSet<DbUserMatch> UserMatches { get; set; }
 
     public MyPoorLilContext()
     {
@@ -27,6 +28,10 @@ public class MyPoorLilContext : DbContext
     {
         modelBuilder.Entity<DbUserStatus>()
             .OwnsOne(e => e.RpInfo);
+
+        modelBuilder.Entity<DbUser>()
+            .OwnsMany(u => u.Matches)
+            .WithOwner(m => m.User);
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

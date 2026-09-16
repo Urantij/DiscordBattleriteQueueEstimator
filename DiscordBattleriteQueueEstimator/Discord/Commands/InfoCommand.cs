@@ -15,8 +15,8 @@ public class InfoCommand : BaseCommand
     public override Task DoAsync(GatewayClient sender, SlashCommandInteraction args)
     {
         int total = _worker.CountUsers();
-        int inLeagueQueue = _worker.CountUsers(u => u.LastInfo.Details == "In Queue: League");
-        int inCasualsQueue = _worker.CountUsers(u => u.LastInfo.Details == "In Queue: Casual");
+        int inLeagueQueue = _worker.CountUsers(u => u.GetLast()?.Details == "In Queue: League");
+        int inCasualsQueue = _worker.CountUsers(u => u.GetLast()?.Details == "In Queue: Casual");
 
         return SendReplyAsync(args,
             $"Total: {total}\nLeague Queue: {inLeagueQueue}\nCasual Queue: {inCasualsQueue}");

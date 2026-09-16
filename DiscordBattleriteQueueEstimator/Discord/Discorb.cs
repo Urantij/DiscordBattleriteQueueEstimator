@@ -115,6 +115,9 @@ public class Discorb : IHostedService
         if (activity == null)
             return (null, false);
 
+        // TODO почему я решил юзать флаг фейк вместо того чтобы просто делать нулабл рпинфо?
+        // и зачем мне ваще фейкрп?
+
         bool fakeRp;
         RpInfo? rpInfo;
 

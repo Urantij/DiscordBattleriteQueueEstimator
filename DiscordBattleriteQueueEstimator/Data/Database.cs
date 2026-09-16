@@ -98,4 +98,52 @@ public class Database
             .Select(s => s.StatusId)
             .FirstOrDefaultAsync();
     }
+
+    public async Task<DbUserMatch> CreateUserMatchAsync(int userId, DbMatchType matchType, string hero, int partySize,
+        int score1, int score2,
+        DateTimeOffset startDate)
+    {
+        await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
+
+        DbUserMatch userMatch = new(userId, matchType, hero, partySize, score1, score2, startDate);
+
+        context.UserMatches.Add(userMatch);
+
+        await context.SaveChangesAsync();
+
+        return userMatch;
+    }
+
+    public async Task UpdateUserMatchScoreAsync(int userMatchId, int score1, int score2)
+    {
+        await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
+
+        await context.UserMatches.Where(u => u.Id == userMatchId)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(m => m.Score1, score1)
+                .SetProperty(m => m.Score2, score2)
+            );
+    }
+
+    public async Task UpdateUserMatchFinishAsync(int userMatchId, int score1, int score2, DateTimeOffset endDate)
+    {
+        await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
+
+        await context.UserMatches.Where(u => u.Id == userMatchId)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(m => m.Score1, score1)
+                .SetProperty(m => m.Score2, score2)
+                .SetProperty(m => m.EndDate, endDate)
+            );
+    }
+
+    public async Task UpdateUserMatchHeroAsync(int userMatchId, string hero)
+    {
+        await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
+
+        await context.UserMatches.Where(u => u.Id == userMatchId)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(m => m.Hero, hero)
+            );
+    }
 }
