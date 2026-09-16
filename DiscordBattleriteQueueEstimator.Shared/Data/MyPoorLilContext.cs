@@ -30,8 +30,12 @@ public class MyPoorLilContext : DbContext
             .OwnsOne(e => e.RpInfo);
 
         modelBuilder.Entity<DbUser>()
-            .OwnsMany(u => u.Matches)
-            .WithOwner(m => m.User);
+            .HasMany(u => u.Matches)
+            .WithOne(m => m.User)
+            .HasForeignKey(m => m.UserId)
+            .IsRequired();
+        // оказывается это не то.
+        // .WithOwner(m => m.User);
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

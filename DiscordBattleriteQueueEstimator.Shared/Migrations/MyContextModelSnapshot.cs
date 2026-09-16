@@ -47,6 +47,44 @@ namespace DiscordBattleriteQueueEstimator.Shared.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("DiscordBattleriteQueueEstimator.Shared.Data.Models.DbUserMatch", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("EndDate")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Hero")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MatchType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PartySize")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Score1")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Score2")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("StartDate")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserMatches");
+                });
+
             modelBuilder.Entity("DiscordBattleriteQueueEstimator.Shared.Data.Models.DbUserStatus", b =>
                 {
                     b.Property<int>("Id")
@@ -69,52 +107,15 @@ namespace DiscordBattleriteQueueEstimator.Shared.Migrations
                     b.ToTable("Statuses");
                 });
 
-            modelBuilder.Entity("DiscordBattleriteQueueEstimator.Shared.Data.Models.DbUser", b =>
+            modelBuilder.Entity("DiscordBattleriteQueueEstimator.Shared.Data.Models.DbUserMatch", b =>
                 {
-                    b.OwnsMany("DiscordBattleriteQueueEstimator.Shared.Data.Models.DbUserMatch", "Matches", b1 =>
-                        {
-                            b1.Property<int>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("INTEGER");
+                    b.HasOne("DiscordBattleriteQueueEstimator.Shared.Data.Models.DbUser", "User")
+                        .WithMany("Matches")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                            b1.Property<long?>("EndDate")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<string>("Hero")
-                                .IsRequired()
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("MatchType")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("PartySize")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("Score1")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("Score2")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<long>("StartDate")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<int>("UserId")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("Id");
-
-                            b1.HasIndex("UserId");
-
-                            b1.ToTable("UserMatches");
-
-                            b1.WithOwner("User")
-                                .HasForeignKey("UserId");
-
-                            b1.Navigation("User");
-                        });
-
-                    b.Navigation("Matches");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DiscordBattleriteQueueEstimator.Shared.Data.Models.DbUserStatus", b =>
@@ -158,6 +159,8 @@ namespace DiscordBattleriteQueueEstimator.Shared.Migrations
 
             modelBuilder.Entity("DiscordBattleriteQueueEstimator.Shared.Data.Models.DbUser", b =>
                 {
+                    b.Navigation("Matches");
+
                     b.Navigation("Statuses");
                 });
 #pragma warning restore 612, 618
