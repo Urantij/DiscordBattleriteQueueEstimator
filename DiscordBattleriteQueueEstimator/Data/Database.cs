@@ -118,10 +118,17 @@ public class Database
     {
         await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
-        await context.UserMatches.Where(u => u.Id == userMatchId)
+        // добро пожаловать в еф кор аот
+        int id = userMatchId;
+        var a = score1;
+        var b = score2;
+
+        await context.UserMatches.Where(u => u.Id == id)
             .ExecuteUpdateAsync(s => s
-                .SetProperty(m => m.Score1, score1)
-                .SetProperty(m => m.Score2, score2)
+                .SetProperty(m => m.Score1, m => a)
+                .SetProperty(m => m.Score2, m => b)
+                // сурсген плакает если брать это
+                // .SetProperty(m => m.Score2, b)
             );
     }
 
@@ -129,11 +136,17 @@ public class Database
     {
         await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
-        await context.UserMatches.Where(u => u.Id == userMatchId)
+        // добро пожаловать в еф кор аот
+        int id = userMatchId;
+        var a = score1;
+        var b = score2;
+        DateTimeOffset? d = endDate;
+
+        await context.UserMatches.Where(u => u.Id == id)
             .ExecuteUpdateAsync(s => s
-                .SetProperty(m => m.Score1, score1)
-                .SetProperty(m => m.Score2, score2)
-                .SetProperty(m => m.EndDate, endDate)
+                .SetProperty(m => m.Score1, m => a)
+                .SetProperty(m => m.Score2, m => b)
+                .SetProperty(m => m.EndDate, m => d)
             );
     }
 
@@ -141,9 +154,13 @@ public class Database
     {
         await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
-        await context.UserMatches.Where(u => u.Id == userMatchId)
+        // добро пожаловать в еф кор аот
+        int id = userMatchId;
+        var a = hero;
+
+        await context.UserMatches.Where(u => u.Id == id)
             .ExecuteUpdateAsync(s => s
-                .SetProperty(m => m.Hero, hero)
+                .SetProperty(m => m.Hero, m => a)
             );
     }
 }
