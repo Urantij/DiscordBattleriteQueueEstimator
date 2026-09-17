@@ -8,7 +8,7 @@ public readonly struct DiscordId
 
     public static bool TryParse(string? value, IFormatProvider? provider, out DiscordId result)
     {
-        if (ulong.TryParse(value, out var parsed))
+        if (ulong.TryParse(value, provider, out var parsed))
         {
             result = new DiscordId(parsed);
             return true;

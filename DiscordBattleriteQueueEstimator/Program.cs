@@ -116,9 +116,9 @@ public class Program
                 throw new Exception($"Код выхода миграции {code}");
         }
 
-        host.MapGet("/public/user/matches/{{id}}", MatchesRoutes.GetAsync);
+        host.MapGet("/public/user/matches/{id}", MatchesRoutes.GetAsync);
         host.MapPost("/private/control/generatematches", ControlRoutes.GenerateMatchesAsync);
-        host.MapPost("/private/control/health", ControlRoutes.GetHealthAsync);
+        host.MapGet("/private/control/health", ControlRoutes.GetHealthAsync);
 
         host.Run();
     }

@@ -2,6 +2,8 @@ using DiscordBattleriteQueueEstimator.Data;
 using DiscordBattleriteQueueEstimator.Shared.Data.Models;
 using DiscordBattleriteQueueEstimator.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DiscordBattleriteQueueEstimator.Routes;
 
@@ -38,7 +40,8 @@ public static class MatchesRoutes
 
     private static DateTimeOffset MakeDefaultAfter() => DateTimeOffset.UtcNow - TimeSpan.FromDays(1);
 
-    public static async Task<IResult> GetAsync(HttpContext httpContext, DiscordId id, Database database)
+    public static async Task<IResult> GetAsync(HttpContext httpContext, [FromRoute] DiscordId id,
+        [FromServices] Database database)
     {
         int limit = httpContext.Request.Query.GetInt(LimitQuery) ?? HardLimit;
         if (limit > HardLimit)

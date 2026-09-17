@@ -185,7 +185,7 @@ public partial class Worker : IHostedService
 
         // int.Parse безопасно потому что регекс чекает на цифры. да в ТЕОРИИ там может быть странный набор цифр, но я не верю.
         // херо и патисайз там всегда есть, но чтобы иде не плакала
-        if (matchParsedRegex != null && userNewInfo.Info?.Hero != null)
+        if (matchParsedRegex?.Success == true && userNewInfo.Info?.Hero != null)
         {
             NewMatchStatusArrived?.Invoke(new NewMatchStatusData(user,
                 int.Parse(matchParsedRegex.Groups["team1"]
