@@ -45,6 +45,8 @@ public class MatchObserver : IHostedService
     private readonly Database _database;
     private readonly ILogger<MatchObserver> _logger;
 
+    // я думал это бесполезная чушь, а оказалось...
+    // Если чел ливнет посреди матча и не вернётся, эта штука бы висела в памяти до его возвращения в игру. Вот так вот.
     private readonly TimeSpan _healthCheckCd = TimeSpan.FromHours(2);
     private readonly TimeSpan _matchHealthDuration = TimeSpan.FromHours(2);
 
