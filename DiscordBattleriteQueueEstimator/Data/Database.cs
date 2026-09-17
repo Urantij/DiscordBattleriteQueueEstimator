@@ -114,7 +114,7 @@ public class Database
         return userMatch;
     }
 
-    public async Task UpdateUserMatchScoreAsync(int userMatchId, int score1, int score2)
+    public async Task UpdateUserMatchScoreAsync(int userMatchId, int score1, int score2, DateTimeOffset date)
     {
         await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
@@ -122,17 +122,20 @@ public class Database
         int id = userMatchId;
         var a = score1;
         var b = score2;
+        var d = date;
 
         await context.UserMatches.Where(u => u.Id == id)
             .ExecuteUpdateAsync(s => s
-                .SetProperty(m => m.Score1, m => a)
-                .SetProperty(m => m.Score2, m => b)
+                    .SetProperty(m => m.Score1, m => a)
+                    .SetProperty(m => m.Score2, m => b)
+                    .SetProperty(m => m.LastDate, m => d)
                 // сурсген плакает если брать это
                 // .SetProperty(m => m.Score2, b)
             );
     }
 
-    public async Task UpdateUserMatchFinishAsync(int userMatchId, int score1, int score2, DateTimeOffset endDate)
+    public async Task UpdateUserMatchFinishAsync(int userMatchId, int score1, int score2, DateTimeOffset endDate,
+        bool? win)
     {
         await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
@@ -141,12 +144,14 @@ public class Database
         var a = score1;
         var b = score2;
         DateTimeOffset? d = endDate;
+        bool? w = win;
 
         await context.UserMatches.Where(u => u.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(m => m.Score1, m => a)
                 .SetProperty(m => m.Score2, m => b)
-                .SetProperty(m => m.EndDate, m => d)
+                .SetProperty(m => m.LastDate, m => d)
+                .SetProperty(m => m.Win, m => w)
             );
     }
 

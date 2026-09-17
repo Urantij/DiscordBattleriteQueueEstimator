@@ -53,12 +53,12 @@ namespace DiscordBattleriteQueueEstimator.Shared.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<long?>("EndDate")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Hero")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<long>("LastDate")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("MatchType")
                         .HasColumnType("INTEGER");
@@ -76,6 +76,9 @@ namespace DiscordBattleriteQueueEstimator.Shared.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool?>("Win")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");

@@ -21,7 +21,9 @@ public class DbUserMatch
     public int Score2 { get; set; }
 
     public DateTimeOffset StartDate { get; set; }
-    public DateTimeOffset? EndDate { get; set; }
+    public DateTimeOffset LastDate { get; set; }
+
+    public bool? Win { get; set; }
 
     public DbUserMatch()
     {
@@ -37,5 +39,7 @@ public class DbUserMatch
         Score1 = score1;
         Score2 = score2;
         StartDate = startDate;
+        LastDate = startDate;
+        Win = null;
     }
 }

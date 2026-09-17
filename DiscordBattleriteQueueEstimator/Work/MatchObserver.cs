@@ -17,7 +17,7 @@ class TrackedMatch
     public int Bo { get; set; }
 
     public DateTimeOffset StartDate { get; }
-    public DateTimeOffset? EndDate { get; set; }
+    public bool Finished { get; set; } = false;
 
     public TrackedMatch(DbUserMatch userMatch, DbMatchType matchType, string hero, int lastScore1, int lastScore2,
         int bo,
@@ -125,7 +125,7 @@ public class MatchObserver : IHostedService
             }
 
             // если пришёл статус о матче, когда мы думаем, что матч закончился, случилось чето нехорошее. просто сделаем вид, что мы ниче не видели и не знаем.
-            if (trackedMatch.EndDate != null)
+            if (trackedMatch.Finished)
                 return;
 
             // Ещё иногда бывает, что в матче становится счёт 0-1, но клиент присылает 2 статуса
@@ -172,9 +172,11 @@ public class MatchObserver : IHostedService
 
             if (obj.Score1 >= maxScore || obj.Score2 >= maxScore)
             {
-                trackedMatch.EndDate = obj.Date;
+                bool? win = obj.Score1 > obj.Score2;
+
+                trackedMatch.Finished = true;
                 await _database.UpdateUserMatchFinishAsync(trackedMatch.UserMatch.Id, trackedMatch.LastScore1,
-                    trackedMatch.LastScore2, trackedMatch.EndDate.Value);
+                    trackedMatch.LastScore2, obj.Date, win);
 
                 // судя по всему, статусов об этом матче не будет больше,
                 // но на всякий случай, я запомню ненадолго этот матс, чтобы он не начался второй раз.
@@ -186,7 +188,7 @@ public class MatchObserver : IHostedService
             else
             {
                 await _database.UpdateUserMatchScoreAsync(trackedMatch.UserMatch.Id, trackedMatch.LastScore1,
-                    trackedMatch.LastScore2);
+                    trackedMatch.LastScore2, obj.Date);
             }
         });
     }
@@ -201,7 +203,7 @@ public class MatchObserver : IHostedService
             if (!_dictionary.TryGetValue(obj.OnlineUser.User.Id, out TrackedMatch? match))
                 return Task.CompletedTask;
 
-            if (match.EndDate != null)
+            if (match.Finished)
             {
                 // если матч закончился, мы уберём его из памяти, чтобы следующий матч мог появиться
                 // тут неважно, что пришло в статусе - чел вне игры. чел в меню или очереди. любой статус уже говорит, что матч не вернётся.

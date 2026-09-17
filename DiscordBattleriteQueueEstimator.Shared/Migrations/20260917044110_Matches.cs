@@ -23,7 +23,8 @@ namespace DiscordBattleriteQueueEstimator.Shared.Migrations
                     Score1 = table.Column<int>(type: "INTEGER", nullable: false),
                     Score2 = table.Column<int>(type: "INTEGER", nullable: false),
                     StartDate = table.Column<long>(type: "INTEGER", nullable: false),
-                    EndDate = table.Column<long>(type: "INTEGER", nullable: true)
+                    LastDate = table.Column<long>(type: "INTEGER", nullable: false),
+                    Win = table.Column<bool>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
