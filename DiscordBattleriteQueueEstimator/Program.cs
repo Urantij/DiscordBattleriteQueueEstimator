@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using DiscordBattleriteQueueEstimator.Data;
 using DiscordBattleriteQueueEstimator.Discord;
+using DiscordBattleriteQueueEstimator.Routes;
 using DiscordBattleriteQueueEstimator.Shared.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -13,7 +14,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
+        WebApplicationBuilder builder = WebApplication.CreateSlimBuilder(args);
 
         builder.Logging.ClearProviders();
         builder.Logging.AddSimpleConsole(c => { c.TimestampFormat = "[HH:mm:ss] "; });
@@ -62,7 +63,15 @@ public class Program
         builder.Services.AddSingleton<Work.MatchObserver>();
         builder.Services.AddHostedService<Work.MatchObserver>(p => p.GetRequiredService<Work.MatchObserver>());
 
-        IHost host = builder.Build();
+        // builder.Services.AddRouting(options =>
+        //     options.ConstraintMap.Add("ulong", typeof(UlongRouteConstraint)));
+
+        builder.Services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.TypeInfoResolver = MyJsonSirContext.Default;
+        });
+
+        WebApplication host = builder.Build();
 
         using (IServiceScope provider = host.Services.CreateScope())
         {
@@ -106,6 +115,10 @@ public class Program
             if (code != 0)
                 throw new Exception($"Код выхода миграции {code}");
         }
+
+        host.MapGet("/public/user/matches/{{id}}", MatchesRoutes.GetAsync);
+        host.MapPost("/private/control/generatematches", ControlRoutes.GenerateMatchesAsync);
+        host.MapPost("/private/control/health", ControlRoutes.GetHealthAsync);
 
         host.Run();
     }

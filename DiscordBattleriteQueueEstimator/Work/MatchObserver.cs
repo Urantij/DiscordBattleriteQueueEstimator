@@ -84,6 +84,20 @@ public class MatchObserver : IHostedService
         return Task.CompletedTask;
     }
 
+    public Task<int> GetMatchesCountAsync()
+    {
+        TaskCompletionSource<int> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        _looper.Add(() =>
+        {
+            tcs.SetResult(_dictionary.Count);
+
+            return Task.CompletedTask;
+        });
+
+        return tcs.Task;
+    }
+
     private void WorkerOnNewMatchStatusArrived(NewMatchStatusData obj)
     {
         _looper.Add(async () =>
