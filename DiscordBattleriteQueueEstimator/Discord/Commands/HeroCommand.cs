@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using DiscordBattleriteQueueEstimator.Data;
 using DiscordBattleriteQueueEstimator.Shared.Data;
+using DiscordBattleriteQueueEstimator.Utils;
 using Microsoft.EntityFrameworkCore;
 using NetCord;
 using NetCord.Gateway;
@@ -84,7 +85,7 @@ public class HeroCommand : BaseCommand
 
             TimeSpan diff = nextStatus.Date - status.Date;
 
-            Match match = Work.Worker.ArenaRegex.Match(status.Details);
+            Match match = RpDetails.ArenaRegex.Match(status.Details);
             if (!match.Success)
             {
                 currentIndex++;
@@ -128,7 +129,7 @@ public class HeroCommand : BaseCommand
 
                 postGameDate = lookUpStatus.Date;
 
-                if (lookUpStatus.Details != null && Work.Worker.ArenaRegex.IsMatch(lookUpStatus.Details))
+                if (lookUpStatus.Details != null && RpDetails.ArenaRegex.IsMatch(lookUpStatus.Details))
                     lookUpIndex++;
                 else
                     break;

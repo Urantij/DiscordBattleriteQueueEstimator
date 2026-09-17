@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using DiscordBattleriteQueueEstimator.Data;
 using DiscordBattleriteQueueEstimator.Shared.Data;
+using DiscordBattleriteQueueEstimator.Utils;
 using Microsoft.EntityFrameworkCore;
 using NetCord;
 using NetCord.Gateway;
@@ -113,7 +114,7 @@ public class TimeCommand : BaseCommand
                 casualQueueTime += diff;
             else
             {
-                Match match = Work.Worker.ArenaRegex.Match(status.Details);
+                Match match = RpDetails.ArenaRegex.Match(status.Details);
 
                 if (!match.Success)
                 {
@@ -209,7 +210,7 @@ public class TimeCommand : BaseCommand
 
                     // Ещё можно проверять героя (учитывая, что во время загрузки матча первый статус приходит с нулл героем)
                     // И какой Bo в матче. Но впадлу как то.
-                    if (lookUpStatus.Details != null && Work.Worker.ArenaRegex.IsMatch(lookUpStatus.Details))
+                    if (lookUpStatus.Details != null && RpDetails.ArenaRegex.IsMatch(lookUpStatus.Details))
                         lookUpIndex++;
                     else
                         break;
