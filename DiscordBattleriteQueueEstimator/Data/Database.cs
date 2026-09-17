@@ -143,7 +143,7 @@ public class Database
         int id = userMatchId;
         var a = score1;
         var b = score2;
-        DateTimeOffset? d = endDate;
+        DateTimeOffset d = endDate;
         bool? w = win;
 
         await context.UserMatches.Where(u => u.Id == id)

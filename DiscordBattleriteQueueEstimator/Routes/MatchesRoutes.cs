@@ -46,9 +46,11 @@ public static class MatchesRoutes
 
         DateTimeOffset after = httpContext.Request.Query.GetDateTime(AfterQuery) ?? MakeDefaultAfter();
 
+        ulong nid = id.Value;
+
         await using var dbContext = await database.CreateContextAsync();
         WebMatchModel[] result = await dbContext.UserMatches
-            .Where(m => m.User.DiscordId == id.Value)
+            .Where(m => m.User.DiscordId == nid)
             .Where(m => m.StartDate > after)
             .OrderByDescending(m => m.Id)
             .Take(limit)
