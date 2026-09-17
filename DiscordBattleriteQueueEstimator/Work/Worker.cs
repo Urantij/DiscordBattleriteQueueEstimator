@@ -49,9 +49,6 @@ public partial class Worker : IHostedService
 
     private readonly SoloLooper _looper;
 
-    // "In 3v3 Arena | 0-0 | Bo5"
-    public static readonly Regex ArenaRegex = MakeArenaRegex();
-
     public event Action<NewMatchStatusData>? NewMatchStatusArrived;
     public event Action<NewGenericStatusData>? NewGenericStatusArrived;
 
@@ -121,7 +118,7 @@ public partial class Worker : IHostedService
         Match? matchParsedRegex = null;
         if (userNewInfo.Info?.Details != null)
         {
-            matchParsedRegex = ArenaRegex.Match(userNewInfo.Info.Details);
+            matchParsedRegex = RpDetails.ArenaRegex.Match(userNewInfo.Info.Details);
             if (matchParsedRegex.Success)
             {
                 // Такая багулина бывает и забивает логи. Скипаем.
@@ -210,8 +207,4 @@ public partial class Worker : IHostedService
         _logger.LogDebug("Записали статус пользователя {id} {isFake} {status}", user.User.Id, userNewInfo.FakeRp,
             userNewInfo.Info);
     }
-
-    [GeneratedRegex(@"In (?<team1>\d+)v(?<team2>\d+) Arena \| (?<score1>\d+)-(?<score2>\d+) \| Bo(?<Bo>\d+)",
-        RegexOptions.Compiled)]
-    private static partial Regex MakeArenaRegex();
 }
