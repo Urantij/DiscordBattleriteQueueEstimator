@@ -75,6 +75,9 @@ namespace DiscordBattleriteQueueEstimator.Shared.Migrations
                     b.Property<long>("StartDate")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("TeamSize")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("UserId")
                         .HasColumnType("INTEGER");
 

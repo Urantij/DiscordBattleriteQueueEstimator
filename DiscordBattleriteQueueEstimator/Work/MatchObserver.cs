@@ -114,8 +114,8 @@ public class MatchObserver : IHostedService
                 // TODO в теории если бота врубили посреди матча, и первый статус он получает кривой, всё будет плохо... типа можно ждать 1 сек, вдруг придёт обнова, 
                 // но ситуация редкая и мне впадлу
 
-                DbUserMatch db = await _database.CreateUserMatchAsync(obj.OnlineUser.User.Id, matchType, obj.Hero,
-                    obj.PartySize, obj.Score1, obj.Score2, obj.Date);
+                DbUserMatch db = await _database.CreateUserMatchAsync(obj.OnlineUser.User.Id, matchType, obj.TeamSize,
+                    obj.Hero, obj.PartySize, obj.Score1, obj.Score2, obj.Date);
 
                 trackedMatch = new TrackedMatch(db, matchType, obj.Hero, obj.Score1, obj.Score2, obj.Bo,
                     obj.Date);

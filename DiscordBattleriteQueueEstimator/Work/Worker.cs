@@ -8,6 +8,7 @@ namespace DiscordBattleriteQueueEstimator.Work;
 
 public class NewMatchStatusData(
     OnlineUser onlineUser,
+    int teamSize,
     string hero,
     int score1,
     int score2,
@@ -16,6 +17,8 @@ public class NewMatchStatusData(
     DateTimeOffset date)
 {
     public OnlineUser OnlineUser { get; } = onlineUser;
+
+    public int TeamSize { get; } = teamSize;
 
     public string Hero { get; } = hero;
 
@@ -188,6 +191,8 @@ public partial class Worker : IHostedService
         if (matchParsedRegex != null && userNewInfo.Info?.Hero != null)
         {
             NewMatchStatusArrived?.Invoke(new NewMatchStatusData(user,
+                int.Parse(matchParsedRegex.Groups["team1"]
+                    .Value), // ну они же никогда не будут разными в тим1 и 2 да да да
                 userNewInfo.Info.Hero,
                 int.Parse(matchParsedRegex.Groups["score1"].Value),
                 int.Parse(matchParsedRegex.Groups["score2"].Value),

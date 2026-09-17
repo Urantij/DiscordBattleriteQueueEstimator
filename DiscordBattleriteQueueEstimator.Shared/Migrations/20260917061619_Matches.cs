@@ -18,6 +18,7 @@ namespace DiscordBattleriteQueueEstimator.Shared.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     UserId = table.Column<int>(type: "INTEGER", nullable: false),
                     MatchType = table.Column<int>(type: "INTEGER", nullable: false),
+                    TeamSize = table.Column<int>(type: "INTEGER", nullable: false),
                     Hero = table.Column<string>(type: "TEXT", nullable: false),
                     PartySize = table.Column<int>(type: "INTEGER", nullable: false),
                     Score1 = table.Column<int>(type: "INTEGER", nullable: false),

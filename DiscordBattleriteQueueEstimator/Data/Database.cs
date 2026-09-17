@@ -99,13 +99,13 @@ public class Database
             .FirstOrDefaultAsync();
     }
 
-    public async Task<DbUserMatch> CreateUserMatchAsync(int userId, DbMatchType matchType, string hero, int partySize,
-        int score1, int score2,
+    public async Task<DbUserMatch> CreateUserMatchAsync(int userId, DbMatchType matchType, int teamSize, string hero,
+        int partySize, int score1, int score2,
         DateTimeOffset startDate)
     {
         await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
-        DbUserMatch userMatch = new(userId, matchType, hero, partySize, score1, score2, startDate);
+        DbUserMatch userMatch = new(userId, matchType, teamSize, hero, partySize, score1, score2, startDate);
 
         context.UserMatches.Add(userMatch);
 

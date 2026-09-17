@@ -12,6 +12,7 @@ public class DbUserMatch
     public DbUser User { get; set; }
 
     public DbMatchType MatchType { get; set; }
+    public int TeamSize { get; set; }
 
     public string Hero { get; set; }
 
@@ -29,11 +30,12 @@ public class DbUserMatch
     {
     }
 
-    public DbUserMatch(int userId, DbMatchType matchType, string hero, int partySize, int score1, int score2,
-        DateTimeOffset startDate)
+    public DbUserMatch(int userId, DbMatchType matchType, int teamSize, string hero, int partySize,
+        int score1, int score2, DateTimeOffset startDate)
     {
         UserId = userId;
         MatchType = matchType;
+        TeamSize = teamSize;
         Hero = hero;
         PartySize = partySize;
         Score1 = score1;
