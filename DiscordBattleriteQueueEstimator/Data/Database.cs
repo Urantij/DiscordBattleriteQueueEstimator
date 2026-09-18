@@ -118,20 +118,31 @@ public class Database
     {
         await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
-        // добро пожаловать в еф кор аот
-        int id = userMatchId;
-        var a = score1;
-        var b = score2;
-        var d = date;
+        DbUserMatch model = new();
+        model.Id = userMatchId;
 
-        await context.UserMatches.Where(u => u.Id == id)
-            .ExecuteUpdateAsync(s => s
-                    .SetProperty(m => m.Score1, m => a)
-                    .SetProperty(m => m.Score2, m => b)
-                    .SetProperty(m => m.LastDate, m => d)
-                // сурсген плакает если брать это
-                // .SetProperty(m => m.Score2, b)
-            );
+        context.UserMatches.Attach(model);
+
+        model.Score1 = score1;
+        model.Score2 = score2;
+        model.LastDate = date;
+
+        await context.SaveChangesAsync();
+
+        // // добро пожаловать в еф кор аот
+        // int id = userMatchId;
+        // var a = score1;
+        // var b = score2;
+        // var d = date;
+        //
+        // await context.UserMatches.Where(u => u.Id == id)
+        //     .ExecuteUpdateAsync(s => s
+        //             .SetProperty(m => m.Score1, m => a)
+        //             .SetProperty(m => m.Score2, m => b)
+        //             .SetProperty(m => m.LastDate, m => d)
+        //         // сурсген плакает если брать это
+        //         // .SetProperty(m => m.Score2, b)
+        //     );
     }
 
     public async Task UpdateUserMatchFinishAsync(int userMatchId, int score1, int score2, DateTimeOffset endDate,
@@ -139,33 +150,54 @@ public class Database
     {
         await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
-        // добро пожаловать в еф кор аот
-        int id = userMatchId;
-        var a = score1;
-        var b = score2;
-        DateTimeOffset d = endDate;
-        bool? w = win;
+        DbUserMatch model = new();
+        model.Id = userMatchId;
 
-        await context.UserMatches.Where(u => u.Id == id)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(m => m.Score1, m => a)
-                .SetProperty(m => m.Score2, m => b)
-                .SetProperty(m => m.LastDate, m => d)
-                .SetProperty(m => m.Win, m => w)
-            );
+        context.UserMatches.Attach(model);
+
+        model.Score1 = score1;
+        model.Score2 = score2;
+        model.LastDate = endDate;
+        model.Win = win;
+
+        await context.SaveChangesAsync();
+
+        // аоту очень плохо от этого
+        // // добро пожаловать в еф кор аот
+        // int id = userMatchId;
+        // var a = score1;
+        // var b = score2;
+        // DateTimeOffset d = endDate;
+        // bool? w = win;
+        // await context.UserMatches.Where(u => u.Id == id)
+        //     .ExecuteUpdateAsync(s => s
+        //         .SetProperty(m => m.Score1, m => a)
+        //         .SetProperty(m => m.Score2, m => b)
+        //         .SetProperty(m => m.LastDate, m => d)
+        //         .SetProperty(m => m.Win, m => w)
+        //     );
     }
 
     public async Task UpdateUserMatchHeroAsync(int userMatchId, string hero)
     {
         await using MyPoorLilContext context = await _factory.CreateDbContextAsync();
 
-        // добро пожаловать в еф кор аот
-        int id = userMatchId;
-        var a = hero;
+        DbUserMatch model = new();
+        model.Id = userMatchId;
 
-        await context.UserMatches.Where(u => u.Id == id)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(m => m.Hero, m => a)
-            );
+        context.UserMatches.Attach(model);
+
+        model.Hero = hero;
+
+        await context.SaveChangesAsync();
+
+        // // добро пожаловать в еф кор аот
+        // int id = userMatchId;
+        // var a = hero;
+        //
+        // await context.UserMatches.Where(u => u.Id == id)
+        //     .ExecuteUpdateAsync(s => s
+        //         .SetProperty(m => m.Hero, m => a)
+        //     );
     }
 }

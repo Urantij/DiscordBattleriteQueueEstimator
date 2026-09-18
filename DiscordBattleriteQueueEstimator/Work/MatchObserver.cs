@@ -6,7 +6,8 @@ namespace DiscordBattleriteQueueEstimator.Work;
 
 class TrackedMatch
 {
-    public DbUserMatch UserMatch { get; }
+    public int DbUserMatchId { get; }
+    public int DbUserId { get; }
 
     public DbMatchType MatchType { get; }
 
@@ -19,11 +20,12 @@ class TrackedMatch
     public DateTimeOffset StartDate { get; }
     public bool Finished { get; set; } = false;
 
-    public TrackedMatch(DbUserMatch userMatch, DbMatchType matchType, string hero, int lastScore1, int lastScore2,
-        int bo,
+    public TrackedMatch(int dbUserMatchId, int dbUserId, DbMatchType matchType, string hero,
+        int lastScore1, int lastScore2, int bo,
         DateTimeOffset startDate)
     {
-        UserMatch = userMatch;
+        DbUserMatchId = dbUserMatchId;
+        DbUserId = dbUserId;
         MatchType = matchType;
         Hero = hero;
         LastScore1 = lastScore1;
@@ -133,8 +135,10 @@ public class MatchObserver : IHostedService
                 DbUserMatch db = await _database.CreateUserMatchAsync(obj.OnlineUser.User.Id, matchType, obj.TeamSize,
                     obj.Hero, obj.PartySize, obj.Score1, obj.Score2, obj.Date);
 
-                trackedMatch = new TrackedMatch(db, matchType, obj.Hero, obj.Score1, obj.Score2, obj.Bo,
-                    obj.Date);
+                trackedMatch = new TrackedMatch(db.Id, obj.OnlineUser.User.Id, matchType, obj.Hero,
+                    obj.Score1, obj.Score2, obj.Bo, obj.Date);
+
+                _logger.LogDebug("Добавили матч в базу. {id}", db.Id);
 
                 _dictionary[obj.OnlineUser.User.Id] = trackedMatch;
                 return;
@@ -173,7 +177,7 @@ public class MatchObserver : IHostedService
                 // героя показывает даже в очереди, а в лиге героя можно репикать)
                 trackedMatch.Hero = obj.Hero;
 
-                await _database.UpdateUserMatchHeroAsync(trackedMatch.UserMatch.Id, trackedMatch.Hero);
+                await _database.UpdateUserMatchHeroAsync(trackedMatch.DbUserMatchId, trackedMatch.Hero);
             }
 
             if (obj.Score1 == trackedMatch.LastScore1 && obj.Score2 == trackedMatch.LastScore2)
@@ -191,8 +195,10 @@ public class MatchObserver : IHostedService
                 bool? win = obj.Score1 > obj.Score2;
 
                 trackedMatch.Finished = true;
-                await _database.UpdateUserMatchFinishAsync(trackedMatch.UserMatch.Id, trackedMatch.LastScore1,
-                    trackedMatch.LastScore2, obj.Date, win);
+                await _database.UpdateUserMatchFinishAsync(trackedMatch.DbUserMatchId,
+                    trackedMatch.LastScore1, trackedMatch.LastScore2, obj.Date, win);
+
+                _logger.LogDebug("Закрыли матч {id}", trackedMatch.DbUserMatchId);
 
                 // судя по всему, статусов об этом матче не будет больше,
                 // но на всякий случай, я запомню ненадолго этот матс, чтобы он не начался второй раз.
@@ -203,7 +209,7 @@ public class MatchObserver : IHostedService
             }
             else
             {
-                await _database.UpdateUserMatchScoreAsync(trackedMatch.UserMatch.Id, trackedMatch.LastScore1,
+                await _database.UpdateUserMatchScoreAsync(trackedMatch.DbUserMatchId, trackedMatch.LastScore1,
                     trackedMatch.LastScore2, obj.Date);
             }
         });
@@ -223,7 +229,7 @@ public class MatchObserver : IHostedService
             {
                 // если матч закончился, мы уберём его из памяти, чтобы следующий матч мог появиться
                 // тут неважно, что пришло в статусе - чел вне игры. чел в меню или очереди. любой статус уже говорит, что матч не вернётся.
-                _dictionary.Remove(match.UserMatch.User.Id);
+                _dictionary.Remove(match.DbUserId);
                 return Task.CompletedTask;
             }
 
@@ -238,7 +244,7 @@ public class MatchObserver : IHostedService
 
             // TODO может быть как то надо отмечать в бд что мы ниче не знаем, хэ зэ
 
-            _dictionary.Remove(match.UserMatch.User.Id);
+            _dictionary.Remove(match.DbUserId);
 
             return Task.CompletedTask;
         });
